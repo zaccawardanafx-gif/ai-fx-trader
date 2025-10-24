@@ -202,7 +202,7 @@ export default function LoginPage() {
             <div className="flex justify-center mb-6">
               <Logo size="lg" className="animate-pulse hover:scale-110 transition-transform duration-300" />
             </div>
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-8 animate-fade-in" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+            <h1 className="text-3xl md:text-4xl font-bold text-white mb-8 animate-fade-in" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
               ZacFX Trader
             </h1>
             
