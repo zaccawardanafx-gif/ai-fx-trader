@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { getUserTradeIdeas, generateTradeIdea, updateTradeIdeaStatus } from '@/app/actions/generateTradeIdeas'
 import { TrendingUp, TrendingDown, RefreshCw, Clock, Target, Shield, Calendar } from 'lucide-react'
 import { useI18n } from '@/lib/i18n-provider'
@@ -24,7 +24,7 @@ export default function TradeIdeasList({ userId }: { userId: string }) {
   const [error, setError] = useState<string | null>(null)
   const { t } = useI18n()
 
-  const loadTradeIdeas = async () => {
+  const loadTradeIdeas = useCallback(async () => {
     setLoading(true)
     const result = await getUserTradeIdeas(userId)
     if (result.success) {
@@ -33,11 +33,11 @@ export default function TradeIdeasList({ userId }: { userId: string }) {
       setError(result.error || 'Failed to load trade ideas')
     }
     setLoading(false)
-  }
+  }, [userId])
 
   useEffect(() => {
     loadTradeIdeas()
-  }, [userId])
+  }, [loadTradeIdeas])
 
   const handleGenerate = async () => {
     setGenerating(true)

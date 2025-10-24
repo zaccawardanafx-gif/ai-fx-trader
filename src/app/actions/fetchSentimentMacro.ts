@@ -158,7 +158,7 @@ export async function fetchSentimentMacro() {
     
     // Fetch news and social media
     const [news, redditPosts] = await Promise.all([
-      fetchFinancialNews('USD CHF forex'),
+      fetchFinancialNews(),
       fetchRedditPosts('forex', 5)
     ])
     

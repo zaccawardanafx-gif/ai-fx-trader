@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useI18n } from '@/lib/i18n-provider'
 import { getUserPrompts, getActivePrompt, createPrompt, updatePrompt, setActivePrompt } from '@/app/actions/userPrompts'
 import { FileText, Save, Plus, Check } from 'lucide-react'
@@ -27,7 +27,7 @@ export default function PromptEditor({ userId }: { userId: string }) {
   const [success, setSuccess] = useState(false)
   const [isCreatingNew, setIsCreatingNew] = useState(false)
 
-  const loadPrompts = async () => {
+  const loadPrompts = useCallback(async () => {
     setLoading(true)
     const [promptsResult, activeResult] = await Promise.all([
       getUserPrompts(userId),
@@ -53,11 +53,11 @@ export default function PromptEditor({ userId }: { userId: string }) {
     }
 
     setLoading(false)
-  }
+  }, [userId])
 
   useEffect(() => {
     loadPrompts()
-  }, [userId])
+  }, [loadPrompts])
 
   const getDefaultPrompt = () => {
     return `# Context

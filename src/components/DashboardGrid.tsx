@@ -80,7 +80,7 @@ export default function DashboardGrid({ userId }: DashboardGridProps) {
     }
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
-  }, [])
+  }, [defaultLayouts])
 
   const toggleChartVisibility = () => {
     const newState = !chartHidden

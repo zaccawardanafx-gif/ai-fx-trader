@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useI18n } from '@/lib/i18n-provider'
 import { getUserTradeIdeas, generateTradeIdea } from '@/app/actions/generateTradeIdeas'
 import { TrendingUp, TrendingDown, ChevronRight, Sparkles } from 'lucide-react'
@@ -35,7 +35,7 @@ export default function TradeIdeasWidget({ userId }: { userId: string }) {
   const [showAllIdeas, setShowAllIdeas] = useState(false)
   const { t, locale } = useI18n()
 
-  const loadTradeIdeas = async () => {
+  const loadTradeIdeas = useCallback(async () => {
     setLoading(true)
     try {
       console.log('Loading trade ideas for user:', userId)
@@ -52,14 +52,14 @@ export default function TradeIdeasWidget({ userId }: { userId: string }) {
       setError('Failed to load trade ideas')
     }
     setLoading(false)
-  }
+  }, [userId])
 
   useEffect(() => {
     loadTradeIdeas()
     // Auto-refresh every 30 seconds
     const interval = setInterval(loadTradeIdeas, 30000)
     return () => clearInterval(interval)
-  }, [userId])
+  }, [loadTradeIdeas])
 
   const handleGenerate = async () => {
     setGenerating(true)
