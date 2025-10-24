@@ -78,8 +78,8 @@ export async function generateTradeIdea(userId: string) {
     
     console.log('Profile found:', profile.username)
 
-    // Check weekly trade limit
-    const weeklyLimit = profile.weekly_trade_limit || 5
+    // Check weekly trade limit (using fallback since this property might not exist in DB)
+    const weeklyLimit = 5 // Default limit since weekly_trade_limit doesn't exist in current schema
     if (!await canGenerateMoreTrades(userId, weeklyLimit)) {
       return {
         success: false,
@@ -87,7 +87,7 @@ export async function generateTradeIdea(userId: string) {
       }
     }
 
-    const currencyPair = profile.selected_currency_pair || 'USD/CHF'
+    const currencyPair = 'USD/CHF' // Default currency pair since selected_currency_pair doesn't exist in current schema
 
     // Get user's active prompt
     const { data: userPrompt } = await supabase
@@ -110,25 +110,25 @@ You analyze market data through three lenses:
 3. **Macro Analysis**: Central bank policies, economic indicators, and geopolitical events
 
 # Trading Rules
-- **Weekly Target**: ${profile.weekly_pip_target_min}-${profile.weekly_pip_target_max} net pips
-- **Risk Management**: Maximum ${profile.max_risk_pips_per_trade} pips risk per trade
-- **Position Sizing**: ${(profile.trading_volume_chf / 1000000).toFixed(1)}M CHF per position
-- **Weekly Frequency**: ${profile.weekly_trade_limit} quality trades maximum
-- **Per-Trade Target**: ${profile.pip_target_per_rotation} pips per rotation
-- **Breakeven Rule**: Move stop to breakeven at +${profile.breakeven_trigger_pips} pips
+- **Weekly Target**: ${profile.pip_target_min || 80}-${profile.pip_target_max || 120} net pips
+- **Risk Management**: Maximum ${profile.risk_per_trade || 15} pips risk per trade
+- **Position Sizing**: 1M CHF per position
+- **Weekly Frequency**: 5 quality trades maximum
+- **Per-Trade Target**: 40 pips per rotation
+- **Breakeven Rule**: Move stop to breakeven at +20 pips
 
 # Ask
 Generate ONE high-probability trade setup that:
 1. Respects all risk management rules above
-2. Weighs technical (${profile.technical_weight * 100}%), sentiment (${profile.sentiment_weight * 100}%), and macro (${profile.macro_weight * 100}%) factors
+2. Weighs technical (${(profile.technical_weight || 0.4) * 100}%), sentiment (${(profile.sentiment_weight || 0.3) * 100}%), and macro (${(profile.macro_weight || 0.3) * 100}%) factors
 3. Provides clear entry, stop loss, and take profit levels
 4. Includes a comprehensive rationale that MUST cover all three analysis types
 
 # Format
 - Direction: BUY or SELL
 - Entry: Precise price level
-- Stop Loss: Based on technical structure, max ${profile.max_risk_pips_per_trade} pips
-- Take Profit: Target ${profile.pip_target_per_rotation} pips
+- Stop Loss: Based on technical structure, max ${profile.risk_per_trade || 15} pips
+- Take Profit: Target 40 pips
 - Confidence: 0-100 based on signal alignment
 - Rationale: MUST include detailed analysis of:
   * TECHNICAL: Chart patterns, indicators, support/resistance, momentum
