@@ -24,11 +24,6 @@ interface Profile {
   updated_at: string | null
 }
 
-const CURRENCY_PAIRS = [
-  'USD/CHF', 'EUR/USD', 'GBP/USD', 'USD/JPY', 
-  'AUD/USD', 'USD/CAD', 'NZD/USD', 'EUR/GBP', 
-  'EUR/JPY', 'GBP/JPY'
-]
 
 export default function SettingsForm({ userId, profile }: { userId: string; profile: Profile | null }) {
   const { t } = useI18n()

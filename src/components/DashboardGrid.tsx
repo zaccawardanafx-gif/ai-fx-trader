@@ -90,7 +90,7 @@ export default function DashboardGrid({ userId }: DashboardGridProps) {
 
   const handleLayoutChange = (currentLayout: Layout[], allLayouts: Record<string, Layout[]>) => {
     if (mounted) {
-      setLayouts(allLayouts)
+      setLayouts(allLayouts as { lg: Layout[], md: Layout[], sm: Layout[], xs: Layout[] })
       // Save to localStorage
       localStorage.setItem('dashboard-layouts', JSON.stringify(allLayouts))
     }

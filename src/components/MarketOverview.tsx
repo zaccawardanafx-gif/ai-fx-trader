@@ -8,15 +8,31 @@ import { getAverageSentiment } from '@/app/actions/fetchSentimentMacro'
 import { TrendingUp, Activity, BarChart3, Brain } from 'lucide-react'
 
 interface MarketData {
-  price?: number
-  high?: number
-  low?: number
+  id: number
+  timestamp: string
+  pair: string | null
+  price: number
+  high: number | null
+  low: number | null
+  open: number | null
+  close: number | null
+  volume: number | null
+  source: string | null
+  created_at: string | null
 }
 
 interface Indicators {
-  rsi?: number
-  macd?: number
-  macd_signal?: number
+  id: number
+  timestamp: string
+  pair: string | null
+  rsi: number | null
+  macd: number | null
+  macd_signal: number | null
+  macd_histogram: number | null
+  sma50: number | null
+  sma200: number | null
+  atr: number | null
+  created_at: string | null
 }
 
 export default function MarketOverview() {
@@ -38,7 +54,7 @@ export default function MarketOverview() {
         setMarketData(market.data[0])
       }
       
-      if (inds.success) {
+      if (inds.success && inds.data) {
         setIndicators(inds.data)
       }
       
@@ -96,7 +112,7 @@ export default function MarketOverview() {
           </p>
           {marketData && (
             <div className="mt-1 text-xs text-slate-500">
-              H: {marketData.high?.toFixed(5)} L: {marketData.low?.toFixed(5)}
+              H: {marketData.high?.toFixed(5) || 'N/A'} L: {marketData.low?.toFixed(5) || 'N/A'}
             </div>
           )}
         </div>
@@ -110,7 +126,7 @@ export default function MarketOverview() {
             {indicators?.rsi?.toFixed(2) || 'N/A'}
           </p>
           <p className="mt-1 text-xs text-slate-500">
-            {indicators?.rsi > 70 ? 'Overbought' : indicators?.rsi < 30 ? 'Oversold' : 'Neutral'}
+            {indicators?.rsi && indicators.rsi > 70 ? 'Overbought' : indicators?.rsi && indicators.rsi < 30 ? 'Oversold' : 'Neutral'}
           </p>
         </div>
 

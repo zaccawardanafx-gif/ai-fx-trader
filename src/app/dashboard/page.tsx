@@ -14,7 +14,21 @@ interface User {
 
 interface Profile {
   id: string
-  username?: string
+  username: string | null
+  email: string | null
+  risk_per_trade: number | null
+  pip_target_min: number | null
+  pip_target_max: number | null
+  breakeven_trigger: number | null
+  technical_weight: number | null
+  sentiment_weight: number | null
+  macro_weight: number | null
+  alert_frequency: string | null
+  notify_email: boolean | null
+  notify_whatsapp: boolean | null
+  is_admin: boolean | null
+  created_at: string | null
+  updated_at: string | null
 }
 
 export default function DashboardPage() {

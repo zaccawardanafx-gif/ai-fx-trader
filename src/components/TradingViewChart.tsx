@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
-import dynamic from 'next/dynamic'
 
 const INSTRUMENTS = [
   { label: 'USD/CHF', symbol: 'FX:USDCHF' },
@@ -15,7 +14,7 @@ const INSTRUMENTS = [
 
 export default function TradingViewChart() {
   const containerRef = useRef<HTMLDivElement>(null)
-  const widgetRef = useRef<unknown>(null)
+  const widgetRef = useRef<TradingViewWidget | null>(null)
   const [selectedInstrument] = useState(INSTRUMENTS[0])
   const [timeFrame] = useState('1')
   const [isLoading, setIsLoading] = useState(true)
@@ -134,8 +133,8 @@ export default function TradingViewChart() {
 
     return () => {
       window.removeEventListener('resize', handleResize)
-      if (widgetRef.current && typeof widgetRef.current === 'object' && widgetRef.current !== null && 'remove' in widgetRef.current) {
-        (widgetRef.current as { remove: () => void }).remove()
+      if (widgetRef.current && 'remove' in widgetRef.current) {
+        widgetRef.current.remove()
       }
     }
   }, [createWidget])
@@ -147,7 +146,7 @@ export default function TradingViewChart() {
       // Remove the old widget
       try {
         if ('remove' in widgetRef.current) {
-          (widgetRef.current as any).remove()
+          (widgetRef.current as TradingViewWidget).remove()
         }
       } catch (error) {
         console.warn('TradingViewChart: Error removing old widget:', error)
@@ -233,15 +232,16 @@ export default function TradingViewChart() {
   )
 }
 
+// Define TradingView widget interface
+interface TradingViewWidget {
+  remove: () => void
+}
+
 // Extend Window interface for TradingView
 declare global {
   interface Window {
     TradingView: {
-      widget: new (config: Record<string, unknown>) => {
-        setSymbol: (symbol: string) => void
-        setInterval: (interval: string) => void
-        remove: () => void
-      }
+      widget: new (config: Record<string, unknown>) => TradingViewWidget
     }
   }
 }

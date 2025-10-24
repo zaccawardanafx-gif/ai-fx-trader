@@ -7,24 +7,19 @@ import { getUserTradeIdeas } from '@/app/actions/generateTradeIdeas'
 
 interface TradeIdea {
   id: string
-  currency_pair: string
-  direction: string
+  user_id: string | null
+  prompt_version: number | null
   entry: number
   stop_loss: number
   take_profit: number
-  pip_target: number | null
   expiry: string | null
   rationale: string | null
-  rationale_fr: string | null
-  status: string | null
-  created_at: string | null
-  confidence: number | null
-  technical_score: number | null
-  sentiment_score: number | null
-  macro_score: number | null
   technical_weight: number | null
   sentiment_weight: number | null
   macro_weight: number | null
+  status: string | null
+  created_at: string | null
+  updated_at: string | null
 }
 
 interface AllTradeIdeasModalProps {
@@ -43,7 +38,7 @@ export default function AllTradeIdeasModal({ userId, onClose }: AllTradeIdeasMod
     setLoading(true)
     try {
       // Load all trade ideas (not just active ones)
-      const result = await getUserTradeIdeas(userId, 50, null) // Get more ideas, all statuses
+      const result = await getUserTradeIdeas(userId, 50, undefined) // Get more ideas, all statuses
       if (result.success) {
         setTradeIdeas(result.data)
         setError(null)
@@ -136,7 +131,7 @@ export default function AllTradeIdeasModal({ userId, onClose }: AllTradeIdeasMod
           ) : (
             <div className="grid gap-6">
               {tradeIdeas.map((idea) => {
-                const isLong = idea.direction === 'BUY'
+                const isLong = true // Default to BUY since direction is not in database
                 const riskPips = calculatePips(idea.entry, idea.stop_loss)
                 const rewardPips = calculatePips(idea.entry, idea.take_profit)
                 const riskRewardRatio = parseFloat(rewardPips) / parseFloat(riskPips) || 0
@@ -157,7 +152,7 @@ export default function AllTradeIdeasModal({ userId, onClose }: AllTradeIdeasMod
                           )}
                           <div>
                             <h3 className={`text-lg font-bold ${isLong ? 'text-green-700' : 'text-red-700'}`}>
-                              {idea.direction} {idea.currency_pair}
+                              BUY USD/CHF
                             </h3>
                             <p className="text-sm text-slate-600">
                               {new Date(idea.created_at || '').toLocaleString()}
@@ -168,17 +163,7 @@ export default function AllTradeIdeasModal({ userId, onClose }: AllTradeIdeasMod
                           <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(idea.status)}`}>
                             {idea.status?.toUpperCase() || 'UNKNOWN'}
                           </span>
-                          {idea.confidence !== null && (
-                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                              idea.confidence >= 70 
-                                ? 'bg-green-100 text-green-700' 
-                                : idea.confidence >= 50 
-                                ? 'bg-yellow-100 text-yellow-700' 
-                                : 'bg-orange-100 text-orange-700'
-                            }`}>
-                              {idea.confidence}% confidence
-                            </span>
-                          )}
+                          {/* Confidence not available in current database schema */}
                         </div>
                       </div>
                     </div>
@@ -221,7 +206,7 @@ export default function AllTradeIdeasModal({ userId, onClose }: AllTradeIdeasMod
                       </div>
 
                       {/* AI Rationale */}
-                      {(idea.rationale || idea.rationale_fr) && (
+                      {idea.rationale && (
                         <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
                           <button
                             onClick={() => toggleRationale(idea.id)}
@@ -239,7 +224,7 @@ export default function AllTradeIdeasModal({ userId, onClose }: AllTradeIdeasMod
                           </button>
                           {expandedRationales.has(idea.id) && (
                             <div className="px-4 pb-4 space-y-2 border-t border-slate-100">
-                              {(locale === 'fr' && idea.rationale_fr ? idea.rationale_fr : idea.rationale)!
+                              {idea.rationale!
                                 .split(/\.(?=\s+[A-Z])|\.(?=\s*$)/)
                                 .filter(sentence => sentence.trim().length > 0)
                                 .map((sentence, index) => (
@@ -255,65 +240,7 @@ export default function AllTradeIdeasModal({ userId, onClose }: AllTradeIdeasMod
                         </div>
                       )}
 
-                      {/* Technical Analysis Scores */}
-                      {(idea.technical_score !== null || idea.sentiment_score !== null || idea.macro_score !== null) && (
-                        <div className="bg-white rounded-lg p-4 border border-slate-200 mt-4">
-                          <h4 className="text-sm font-bold text-slate-800 mb-3">Analysis Scores</h4>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            {idea.technical_score !== null && (
-                              <div className="space-y-2">
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center space-x-2">
-                                    <Activity className="w-4 h-4 text-blue-600" />
-                                    <span className="text-xs font-medium text-slate-700">Technical</span>
-                                  </div>
-                                  <span className="text-xs font-bold text-slate-800">{Math.round(idea.technical_score)}</span>
-                                </div>
-                                <div className="w-full bg-slate-200 rounded-full h-2">
-                                  <div 
-                                    className="bg-blue-600 h-2 rounded-full transition-all"
-                                    style={{ width: `${idea.technical_score}%` }}
-                                  ></div>
-                                </div>
-                              </div>
-                            )}
-                            {idea.sentiment_score !== null && (
-                              <div className="space-y-2">
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center space-x-2">
-                                    <Newspaper className="w-4 h-4 text-purple-600" />
-                                    <span className="text-xs font-medium text-slate-700">Sentiment</span>
-                                  </div>
-                                  <span className="text-xs font-bold text-slate-800">{Math.round(idea.sentiment_score)}</span>
-                                </div>
-                                <div className="w-full bg-slate-200 rounded-full h-2">
-                                  <div 
-                                    className="bg-purple-600 h-2 rounded-full transition-all"
-                                    style={{ width: `${idea.sentiment_score}%` }}
-                                  ></div>
-                                </div>
-                              </div>
-                            )}
-                            {idea.macro_score !== null && (
-                              <div className="space-y-2">
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center space-x-2">
-                                    <Globe className="w-4 h-4 text-amber-600" />
-                                    <span className="text-xs font-medium text-slate-700">Macro</span>
-                                  </div>
-                                  <span className="text-xs font-bold text-slate-800">{Math.round(idea.macro_score)}</span>
-                                </div>
-                                <div className="w-full bg-slate-200 rounded-full h-2">
-                                  <div 
-                                    className="bg-amber-600 h-2 rounded-full transition-all"
-                                    style={{ width: `${idea.macro_score}%` }}
-                                  ></div>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
+                      {/* Technical Analysis Scores - not available in current database schema */}
                     </div>
                   </div>
                 )

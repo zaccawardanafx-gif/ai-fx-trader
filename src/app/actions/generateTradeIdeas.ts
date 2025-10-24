@@ -259,7 +259,8 @@ Provide a natural, professional French translation suitable for financial tradin
 
     // Validate pip target is within acceptable range
     const pipTarget = Math.abs(tradeIdea.pip_target)
-    if (pipTarget < profile.pip_target_min || pipTarget > profile.pip_target_max) {
+    if (profile.pip_target_min && profile.pip_target_max && 
+        (pipTarget < profile.pip_target_min || pipTarget > profile.pip_target_max)) {
       console.warn(`Pip target ${pipTarget} outside range, adjusting...`)
     }
 
@@ -339,26 +340,23 @@ Provide a natural, professional French translation suitable for financial tradin
       insertedIdea = {
         id: 'temp-' + Date.now(),
         user_id: userId,
-        direction: tradeIdea.direction,
+        prompt_version: null,
         entry: tradeIdea.entry,
         stop_loss: tradeIdea.stop_loss,
         take_profit: tradeIdea.take_profit,
-        pip_target: tradeIdea.pip_target,
+        expiry: expiryDate.toISOString(),
         rationale: tradeIdea.rationale,
-        confidence: tradeIdea.confidence,
-        technical_score: tradeIdea.technical_score,
-        sentiment_score: tradeIdea.sentiment_score,
-        macro_score: tradeIdea.macro_score,
         technical_weight: profile.technical_weight,
         sentiment_weight: profile.sentiment_weight,
         macro_weight: profile.macro_weight,
         status: 'active',
         created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       }
     } else if (insertError) {
       console.error('Database insert error:', insertError)
       throw insertError
-    } else {
+    } else if (insertedIdea) {
       console.log('Trade idea successfully created:', insertedIdea.id)
       console.log('Rationale successfully stored in database:', insertedIdea.rationale ? 'Yes' : 'No')
     }
