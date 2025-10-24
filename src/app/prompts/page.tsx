@@ -8,6 +8,7 @@ import Header from '@/components/Header'
 import PromptEditor from '@/components/PromptEditor'
 import AnimatedBackground from '@/components/AnimatedBackground'
 
+
 interface User {
   id: string
   email?: string
@@ -25,6 +26,7 @@ export default function PromptsPage() {
   const router = useRouter()
   const supabase = createClient()
   const { t } = useI18n()
+
 
   useEffect(() => {
     async function loadUser() {

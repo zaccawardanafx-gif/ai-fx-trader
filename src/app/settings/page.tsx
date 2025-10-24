@@ -26,6 +26,7 @@ export default function SettingsPage() {
   const supabase = createClient()
   const { t } = useI18n()
 
+
   useEffect(() => {
     async function loadUser() {
       const { data: { user } } = await supabase.auth.getUser()

@@ -6,27 +6,22 @@ import { updateUserProfile } from '@/app/actions/profile'
 import { Save, AlertCircle } from 'lucide-react'
 
 interface Profile {
+  id: string
   username: string | null
+  email: string | null
   risk_per_trade: number | null
   pip_target_min: number | null
   pip_target_max: number | null
   breakeven_trigger: number | null
-  weekly_pip_target_min: number | null
-  weekly_pip_target_max: number | null
-  max_risk_pips_per_trade: number | null
-  weekly_trade_limit: number | null
-  pip_target_per_rotation: number | null
-  breakeven_trigger_pips: number | null
-  trading_volume_chf: number | null
-  leverage_enabled: boolean | null
-  max_leverage: number | null
-  selected_currency_pair: string | null
   technical_weight: number | null
   sentiment_weight: number | null
   macro_weight: number | null
   alert_frequency: string | null
   notify_email: boolean | null
   notify_whatsapp: boolean | null
+  is_admin: boolean | null
+  created_at: string | null
+  updated_at: string | null
 }
 
 const CURRENCY_PAIRS = [
@@ -39,19 +34,11 @@ export default function SettingsForm({ userId, profile }: { userId: string; prof
   const { t } = useI18n()
   const [formData, setFormData] = useState({
     username: profile?.username || '',
-    // Weekly targets
-    weekly_pip_target_min: profile?.weekly_pip_target_min || 80,
-    weekly_pip_target_max: profile?.weekly_pip_target_max || 120,
-    max_risk_pips_per_trade: profile?.max_risk_pips_per_trade || 15,
-    weekly_trade_limit: profile?.weekly_trade_limit || 5,
-    pip_target_per_rotation: profile?.pip_target_per_rotation || 40,
-    breakeven_trigger_pips: profile?.breakeven_trigger_pips || 20,
-    // Trading volume and leverage
-    trading_volume_chf: profile?.trading_volume_chf || 1000000,
-    leverage_enabled: profile?.leverage_enabled ?? false,
-    max_leverage: profile?.max_leverage || 10,
-    // Currency pair
-    selected_currency_pair: profile?.selected_currency_pair || 'USD/CHF',
+    // Trading targets
+    pip_target_min: profile?.pip_target_min || 80,
+    pip_target_max: profile?.pip_target_max || 120,
+    risk_per_trade: profile?.risk_per_trade || 15,
+    breakeven_trigger: profile?.breakeven_trigger || 20,
     // Analysis weights
     technical_weight: profile?.technical_weight || 0.4,
     sentiment_weight: profile?.sentiment_weight || 0.3,
@@ -135,46 +122,13 @@ export default function SettingsForm({ userId, profile }: { userId: string; prof
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-blue-200 mb-2">
-              Currency Pair
-            </label>
-            <select
-              value={formData.selected_currency_pair}
-              onChange={(e) => handleChange('selected_currency_pair', e.target.value)}
-              className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/30 rounded-xl text-white focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition-all duration-200"
-            >
-              {CURRENCY_PAIRS.map(pair => (
-                <option key={pair} value={pair} className="bg-slate-800 text-white">{pair}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-blue-200 mb-2">
-              Trading Volume (CHF)
-            </label>
-            <input
-              type="number"
-              step="100000"
-              min="100000"
-              value={formData.trading_volume_chf}
-              onChange={(e) => handleChange('trading_volume_chf', parseFloat(e.target.value))}
-              className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/30 rounded-xl text-white placeholder-blue-200/70 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition-all duration-200"
-              placeholder="1000000"
-            />
-            <p className="text-xs text-blue-300/70 mt-2">
-              {(formData.trading_volume_chf / 1000000).toFixed(1)}M CHF per position
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-blue-200 mb-2">
-              Weekly Pip Target (Min)
+              Pip Target (Min)
             </label>
             <input
               type="number"
               min="10"
-              value={formData.weekly_pip_target_min}
-              onChange={(e) => handleChange('weekly_pip_target_min', parseInt(e.target.value))}
+              value={formData.pip_target_min}
+              onChange={(e) => handleChange('pip_target_min', parseInt(e.target.value))}
               className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/30 rounded-xl text-white placeholder-blue-200/70 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition-all duration-200"
               placeholder="80"
             />
@@ -182,13 +136,13 @@ export default function SettingsForm({ userId, profile }: { userId: string; prof
 
           <div>
             <label className="block text-sm font-medium text-blue-200 mb-2">
-              Weekly Pip Target (Max)
+              Pip Target (Max)
             </label>
             <input
               type="number"
               min="10"
-              value={formData.weekly_pip_target_max}
-              onChange={(e) => handleChange('weekly_pip_target_max', parseInt(e.target.value))}
+              value={formData.pip_target_max}
+              onChange={(e) => handleChange('pip_target_max', parseInt(e.target.value))}
               className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/30 rounded-xl text-white placeholder-blue-200/70 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition-all duration-200"
               placeholder="120"
             />
@@ -196,46 +150,16 @@ export default function SettingsForm({ userId, profile }: { userId: string; prof
 
           <div>
             <label className="block text-sm font-medium text-blue-200 mb-2">
-              Max Risk per Trade (Pips)
+              Risk per Trade (Pips)
             </label>
             <input
               type="number"
               min="1"
               max="50"
-              value={formData.max_risk_pips_per_trade}
-              onChange={(e) => handleChange('max_risk_pips_per_trade', parseInt(e.target.value))}
+              value={formData.risk_per_trade}
+              onChange={(e) => handleChange('risk_per_trade', parseInt(e.target.value))}
               className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/30 rounded-xl text-white placeholder-blue-200/70 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition-all duration-200"
               placeholder="15"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-blue-200 mb-2">
-              Weekly Trade Limit
-            </label>
-            <input
-              type="number"
-              min="1"
-              max="20"
-              value={formData.weekly_trade_limit}
-              onChange={(e) => handleChange('weekly_trade_limit', parseInt(e.target.value))}
-              className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/30 rounded-xl text-white placeholder-blue-200/70 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition-all duration-200"
-              placeholder="5"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-blue-200 mb-2">
-              Pip Target per Rotation
-            </label>
-            <input
-              type="number"
-              min="10"
-              max="100"
-              value={formData.pip_target_per_rotation}
-              onChange={(e) => handleChange('pip_target_per_rotation', parseInt(e.target.value))}
-              className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/30 rounded-xl text-white placeholder-blue-200/70 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition-all duration-200"
-              placeholder="40"
             />
           </div>
 
@@ -247,8 +171,8 @@ export default function SettingsForm({ userId, profile }: { userId: string; prof
               type="number"
               min="5"
               max="50"
-              value={formData.breakeven_trigger_pips}
-              onChange={(e) => handleChange('breakeven_trigger_pips', parseInt(e.target.value))}
+              value={formData.breakeven_trigger}
+              onChange={(e) => handleChange('breakeven_trigger', parseInt(e.target.value))}
               className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/30 rounded-xl text-white placeholder-blue-200/70 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition-all duration-200"
               placeholder="20"
             />
@@ -256,50 +180,6 @@ export default function SettingsForm({ userId, profile }: { userId: string; prof
         </div>
       </div>
 
-      {/* Leverage Settings */}
-      <div className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl p-8 border border-white/20">
-        <h3 className="text-2xl font-bold text-white mb-3" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-          Leverage Settings
-        </h3>
-        <p className="text-blue-200 mb-6">
-          Configure leverage and risk management
-        </p>
-        
-        <div className="space-y-6">
-          <div className="flex items-center space-x-3">
-            <input
-              type="checkbox"
-              id="leverage_enabled"
-              checked={formData.leverage_enabled}
-              onChange={(e) => handleChange('leverage_enabled', e.target.checked)}
-              className="w-5 h-5 text-blue-600 bg-white/10 border-white/30 rounded focus:ring-blue-400 focus:ring-2"
-            />
-            <label htmlFor="leverage_enabled" className="text-blue-200 font-medium">
-              Enable Leverage Trading
-            </label>
-          </div>
-
-          {formData.leverage_enabled && (
-            <div>
-              <label className="block text-sm font-medium text-blue-200 mb-2">
-                Maximum Leverage
-              </label>
-              <input
-                type="number"
-                min="1"
-                max="100"
-                value={formData.max_leverage}
-                onChange={(e) => handleChange('max_leverage', parseInt(e.target.value))}
-                className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/30 rounded-xl text-white placeholder-blue-200/70 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition-all duration-200"
-                placeholder="10"
-              />
-              <p className="text-xs text-blue-300/70 mt-2">
-                Higher leverage increases both potential profits and risks
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
 
       {/* Analysis Weights */}
       <div className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl p-8 border border-white/20">

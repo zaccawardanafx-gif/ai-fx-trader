@@ -15,6 +15,7 @@ export default function Header({ username }: { username?: string | null }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const { t } = useI18n()
 
+
   const handleSignOut = async () => {
     await supabase.auth.signOut()
     router.push('/auth/login')

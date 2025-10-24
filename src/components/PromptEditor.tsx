@@ -43,7 +43,7 @@ export default function PromptEditor({ userId }: { userId: string }) {
       setTitle(activeResult.data.title || '')
       setPromptText(activeResult.data.prompt_text)
       setEditingPrompt(activeResult.data)
-    } else if (promptsResult.data.length > 0) {
+    } else if (promptsResult.success && promptsResult.data.length > 0) {
       // If no active prompt, use the latest one
       const latest = promptsResult.data[0]
       setActivePromptState(latest)
