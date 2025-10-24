@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useState } from 'react'
-import { Settings, FileText, LogOut, Menu, X, Home, MessageSquare } from 'lucide-react'
+import { Settings, LogOut, Menu, X, Home, MessageSquare } from 'lucide-react'
 import { useI18n } from '@/lib/i18n-provider'
 import Logo from './Logo'
 import { LanguageSwitcher } from './LanguageSwitcher'
@@ -13,7 +13,7 @@ export default function Header({ username }: { username?: string | null }) {
   const router = useRouter()
   const supabase = createClient()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const { t, isReady } = useI18n()
+  const { t } = useI18n()
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()

@@ -47,7 +47,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
   const t = (key: string): string => {
     const keys = key.split('.');
-    let value: any = messages[locale];
+    let value: unknown = messages[locale];
     
     for (const k of keys) {
       if (value && typeof value === 'object') {

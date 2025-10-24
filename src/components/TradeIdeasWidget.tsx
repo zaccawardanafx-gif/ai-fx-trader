@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useI18n } from '@/lib/i18n-provider'
 import { getUserTradeIdeas, generateTradeIdea } from '@/app/actions/generateTradeIdeas'
-import { TrendingUp, TrendingDown, RefreshCw, ChevronRight, Sparkles } from 'lucide-react'
+import { TrendingUp, TrendingDown, ChevronRight, Sparkles } from 'lucide-react'
 import TradeIdeaDetail from './TradeIdeaDetail'
 import AllTradeIdeasModal from './AllTradeIdeasModal'
 

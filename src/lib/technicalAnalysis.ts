@@ -47,7 +47,6 @@ export function calculateTechnicalIndicators(priceData: PriceData[]): TechnicalI
   const closes = priceData.map(d => d.close)
   const highs = priceData.map(d => d.high)
   const lows = priceData.map(d => d.low)
-  const opens = priceData.map(d => d.open)
 
   // RSI (14 period)
   const rsiValues = RSI.calculate({

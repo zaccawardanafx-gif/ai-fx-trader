@@ -15,7 +15,7 @@ const SentimentAnalysisSchema = z.object({
  * Fetch news from free NewsAPI alternative (using NewsData.io free tier)
  * Alternative: Use RSS feeds from major financial news sites
  */
-async function fetchFinancialNews(_query: string = 'forex USD CHF'): Promise<Array<{
+async function fetchFinancialNews(): Promise<Array<{
   title: string;
   description: string;
   pubDate: string;

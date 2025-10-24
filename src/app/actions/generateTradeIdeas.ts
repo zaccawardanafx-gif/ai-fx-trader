@@ -148,7 +148,6 @@ Your rationale must be a comprehensive analysis that:
 Professional, comprehensive, and data-driven. Provide actionable insights with clear reasoning.`
 
     const promptText = userPrompt?.prompt_text || defaultPrompt
-    const promptVersion = userPrompt?.version || 1
 
     // Fetch all necessary data
     console.log('Fetching current price for:', currencyPair)

@@ -1,8 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { X, TrendingUp, TrendingDown, Target, Shield, Calendar, Activity, Brain, Newspaper, Globe, Play, Ban, Settings, BarChart3 } from 'lucide-react'
-import { executeTrade } from '@/app/actions/tradeExecution'
+import { X, TrendingUp, TrendingDown, Target, Shield, Activity, Brain, Newspaper, Globe, Play, Ban, Settings, BarChart3 } from 'lucide-react'
 import { updateTradeIdeaStatus } from '@/app/actions/generateTradeIdeas'
 import { useI18n } from '@/lib/i18n-provider'
 
@@ -35,7 +34,7 @@ interface TradeIdeaDetailProps {
   onUpdate: () => void
 }
 
-export default function TradeIdeaDetail({ idea, userId, onClose, onUpdate }: TradeIdeaDetailProps) {
+export default function TradeIdeaDetail({ idea, onClose, onUpdate }: TradeIdeaDetailProps) {
   const [executing, setExecuting] = useState(false)
   const [cancelling, setCancelling] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)

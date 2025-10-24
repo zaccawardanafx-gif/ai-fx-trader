@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useI18n } from '@/lib/i18n-provider'
 import { getUserPrompts, getActivePrompt, createPrompt, updatePrompt, setActivePrompt } from '@/app/actions/userPrompts'
-import { FileText, Save, Plus, Check, Clock, Edit } from 'lucide-react'
+import { FileText, Save, Plus, Check } from 'lucide-react'
 
 interface UserPrompt {
   id: string

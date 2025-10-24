@@ -12,22 +12,11 @@ const INSTRUMENTS = [
   { label: 'USD/CAD', symbol: 'FX:USDCAD' },
 ]
 
-const TIME_FRAMES = [
-  { label: '1m', value: '1' },
-  { label: '5m', value: '5' },
-  { label: '15m', value: '15' },
-  { label: '1H', value: '60' },
-  { label: '4H', value: '240' },
-  { label: '1D', value: '1D' },
-  { label: '1W', value: '1W' },
-  { label: '1M', value: '1M' },
-]
-
 export default function TradingViewChart() {
   const containerRef = useRef<HTMLDivElement>(null)
   const widgetRef = useRef<unknown>(null)
-  const [selectedInstrument, setSelectedInstrument] = useState(INSTRUMENTS[0])
-  const [timeFrame, setTimeFrame] = useState('1')
+  const [selectedInstrument] = useState(INSTRUMENTS[0])
+  const [timeFrame] = useState('1')
   const [isLoading, setIsLoading] = useState(true)
   const [isMobile, setIsMobile] = useState(false)
   const [isCollapsed, setIsCollapsed] = useState(false)

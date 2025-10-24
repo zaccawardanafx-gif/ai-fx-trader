@@ -15,14 +15,9 @@ export default function SignupPage() {
   const [username, setUsername] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [mounted, setMounted] = useState(false)
   const router = useRouter()
   const supabase = createClient()
   const { t } = useI18n()
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()

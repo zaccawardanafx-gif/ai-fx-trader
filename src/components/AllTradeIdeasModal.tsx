@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useI18n } from '@/lib/i18n-provider'
-import { X, TrendingUp, TrendingDown, Target, Shield, Calendar, Activity, Brain, Newspaper, Globe, Play, Ban, ChevronDown, ChevronUp } from 'lucide-react'
+import { X, TrendingUp, TrendingDown, Activity, Brain, Newspaper, Globe, ChevronDown, ChevronUp } from 'lucide-react'
 import { getUserTradeIdeas } from '@/app/actions/generateTradeIdeas'
 
 interface TradeIdea {

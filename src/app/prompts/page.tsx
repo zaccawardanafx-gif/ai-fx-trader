@@ -8,9 +8,19 @@ import Header from '@/components/Header'
 import PromptEditor from '@/components/PromptEditor'
 import AnimatedBackground from '@/components/AnimatedBackground'
 
+interface User {
+  id: string
+  email?: string
+}
+
+interface Profile {
+  id: string
+  username?: string
+}
+
 export default function PromptsPage() {
-  const [user, setUser] = useState<any>(null)
-  const [profile, setProfile] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
+  const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
   const supabase = createClient()

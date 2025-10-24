@@ -7,9 +7,21 @@ import { getLatestIndicators } from '@/app/actions/computeIndicators'
 import { getAverageSentiment } from '@/app/actions/fetchSentimentMacro'
 import { TrendingUp, Activity, BarChart3, Brain } from 'lucide-react'
 
+interface MarketData {
+  price?: number
+  high?: number
+  low?: number
+}
+
+interface Indicators {
+  rsi?: number
+  macd?: number
+  macd_signal?: number
+}
+
 export default function MarketOverview() {
-  const [marketData, setMarketData] = useState<any>(null)
-  const [indicators, setIndicators] = useState<any>(null)
+  const [marketData, setMarketData] = useState<MarketData | null>(null)
+  const [indicators, setIndicators] = useState<Indicators | null>(null)
   const [sentiment, setSentiment] = useState<number>(0)
   const [loading, setLoading] = useState(true)
   const { t } = useI18n()
