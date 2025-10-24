@@ -9,6 +9,26 @@ import 'react-resizable/css/styles.css'
 
 const ResponsiveGridLayout = WidthProvider(Responsive)
 
+// Default layouts for different breakpoints - moved outside component to prevent re-creation
+const defaultLayouts = {
+  lg: [
+    { i: 'chart', x: 0, y: 0, w: 7, h: 20, minW: 4, minH: 8 },
+    { i: 'trade-ideas', x: 7, y: 0, w: 5, h: 20, minW: 3, minH: 8 },
+  ],
+  md: [
+    { i: 'chart', x: 0, y: 0, w: 6, h: 12, minW: 4, minH: 8 },
+    { i: 'trade-ideas', x: 6, y: 0, w: 4, h: 12, minW: 3, minH: 8 },
+  ],
+  sm: [
+    { i: 'chart', x: 0, y: 0, w: 6, h: 12, minW: 4, minH: 6 },
+    { i: 'trade-ideas', x: 0, y: 12, w: 6, h: 12, minW: 3, minH: 6 },
+  ],
+  xs: [
+    { i: 'chart', x: 0, y: 0, w: 4, h: 10, minW: 2, minH: 5 },
+    { i: 'trade-ideas', x: 0, y: 10, w: 4, h: 12, minW: 2, minH: 6 },
+  ],
+}
+
 interface DashboardGridProps {
   userId: string
 }
@@ -18,26 +38,6 @@ export default function DashboardGrid({ userId }: DashboardGridProps) {
   const [mounted, setMounted] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [chartHidden, setChartHidden] = useState(false)
-
-  // Default layouts for different breakpoints
-  const defaultLayouts = {
-    lg: [
-      { i: 'chart', x: 0, y: 0, w: 7, h: 20, minW: 4, minH: 8 },
-      { i: 'trade-ideas', x: 7, y: 0, w: 5, h: 20, minW: 3, minH: 8 },
-    ],
-    md: [
-      { i: 'chart', x: 0, y: 0, w: 6, h: 12, minW: 4, minH: 8 },
-      { i: 'trade-ideas', x: 6, y: 0, w: 4, h: 12, minW: 3, minH: 8 },
-    ],
-    sm: [
-      { i: 'chart', x: 0, y: 0, w: 6, h: 12, minW: 4, minH: 6 },
-      { i: 'trade-ideas', x: 0, y: 12, w: 6, h: 12, minW: 3, minH: 6 },
-    ],
-    xs: [
-      { i: 'chart', x: 0, y: 0, w: 4, h: 10, minW: 2, minH: 5 },
-      { i: 'trade-ideas', x: 0, y: 10, w: 4, h: 12, minW: 2, minH: 6 },
-    ],
-  }
 
   useEffect(() => {
     setMounted(true)
