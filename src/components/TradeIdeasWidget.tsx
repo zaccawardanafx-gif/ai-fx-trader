@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useI18n } from '@/lib/i18n-provider'
 import { getUserTradeIdeas, generateTradeIdea } from '@/app/actions/generateTradeIdeas'
-import { getAutoGenerationSettings, toggleAutoGenerationPause, updateAutoGenerationSettings } from '@/app/actions/autoGeneration'
+import { getAutoGenerationSettings, toggleAutoGenerationPause, updateAutoGenerationSettings, type AutoGenerationStatus } from '@/app/actions/autoGeneration'
 import { TrendingUp, TrendingDown, ChevronRight, Sparkles, Power, PowerOff } from 'lucide-react'
 import TradeIdeaDetail from './TradeIdeaDetail'
 import AllTradeIdeasModal from './AllTradeIdeasModal'
@@ -42,7 +42,7 @@ export default function TradeIdeasWidget({ userId }: { userId: string }) {
   const [error, setError] = useState<string | null>(null)
   const [selectedIdea, setSelectedIdea] = useState<TradeIdea | null>(null)
   const [showAllIdeas, setShowAllIdeas] = useState(false)
-  const [autoGenSettings, setAutoGenSettings] = useState<any>(null)
+  const [autoGenSettings, setAutoGenSettings] = useState<AutoGenerationStatus | null>(null)
   const [showAutoGenSettings, setShowAutoGenSettings] = useState(false)
   const { t, locale } = useI18n()
 

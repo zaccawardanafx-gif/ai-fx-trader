@@ -206,7 +206,14 @@ export async function updateAutoGenerationSettings(
     }
 
     // Update profile
-    const updateData: any = {
+    const updateData: {
+      auto_generation_enabled: boolean
+      auto_generation_interval: string
+      auto_generation_time: string | null
+      auto_generation_timezone: string
+      auto_generation_paused: boolean
+      next_auto_generation?: string
+    } = {
       auto_generation_enabled: settings.enabled,
       auto_generation_interval: settings.interval,
       auto_generation_time: settings.time || null,

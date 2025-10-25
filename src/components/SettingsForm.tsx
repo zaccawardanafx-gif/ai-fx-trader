@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useI18n } from '@/lib/i18n-provider'
 import { updateUserProfile } from '@/app/actions/profile'
-import { getAutoGenerationSettings } from '@/app/actions/autoGeneration'
+import { getAutoGenerationSettings, type AutoGenerationStatus } from '@/app/actions/autoGeneration'
 import { Save, AlertCircle, Settings } from 'lucide-react'
 import AutoGenerationSettings from './AutoGenerationSettings'
 
@@ -50,7 +50,7 @@ export default function SettingsForm({ userId, profile }: { userId: string; prof
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
   const [showAutoGenSettings, setShowAutoGenSettings] = useState(false)
-  const [autoGenSettings, setAutoGenSettings] = useState<any>(null)
+  const [autoGenSettings, setAutoGenSettings] = useState<AutoGenerationStatus | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -76,7 +76,7 @@ export default function SettingsForm({ userId, profile }: { userId: string; prof
     try {
       const result = await getAutoGenerationSettings(userId)
       if (result.success) {
-        setAutoGenSettings(result.data)
+        setAutoGenSettings(result.data || null)
       }
     } catch (error) {
       console.error('Error loading auto-generation settings:', error)
