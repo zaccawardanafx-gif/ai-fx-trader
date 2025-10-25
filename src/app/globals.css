@@ -155,3 +155,23 @@ body {
   bottom: 0;
   transform: rotate(45deg);
 }
+
+/* Dashboard Grid - Fill available height */
+.layout.react-grid-layout {
+  min-height: 100% !important;
+}
+
+.react-grid-item .widget-content {
+  height: 100%;
+  width: 100%;
+}
+
+/* Ensure drag handle doesn't block interaction */
+.drag-handle {
+  pointer-events: none;
+}
+
+.drag-handle:hover,
+.drag-handle > * {
+  pointer-events: auto;
+}

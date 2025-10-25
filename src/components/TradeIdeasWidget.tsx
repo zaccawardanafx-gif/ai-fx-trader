@@ -9,7 +9,9 @@ import AllTradeIdeasModal from './AllTradeIdeasModal'
 
 interface TradeIdea {
   id: string
-  currency_pair: string
+  user_id: string | null
+  prompt_version: number | null
+  currency_pair: string | null
   direction: string
   entry: number
   stop_loss: number
@@ -18,12 +20,16 @@ interface TradeIdea {
   expiry: string | null
   rationale: string | null
   rationale_fr: string | null
-  status: string | null
-  created_at: string | null
-  confidence: number | null
   technical_score: number | null
   sentiment_score: number | null
   macro_score: number | null
+  confidence: number | null
+  technical_weight: number | null
+  sentiment_weight: number | null
+  macro_weight: number | null
+  status: string | null
+  created_at: string | null
+  updated_at: string | null
 }
 
 export default function TradeIdeasWidget({ userId }: { userId: string }) {
@@ -161,7 +167,7 @@ export default function TradeIdeasWidget({ userId }: { userId: string }) {
                         <span className={`font-bold text-xs sm:text-sm ${isLong ? 'text-green-600' : 'text-red-600'}`}>
                           {idea.direction}
                         </span>
-                        <span className="text-slate-600 text-xs sm:text-sm ml-1">{idea.currency_pair}</span>
+                        <span className="text-slate-600 text-xs sm:text-sm ml-1">{idea.currency_pair || 'N/A'}</span>
                       </div>
                     </div>
                     <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 text-slate-400 group-hover:text-blue-600 transition-colors flex-shrink-0" />
@@ -208,77 +214,18 @@ export default function TradeIdeasWidget({ userId }: { userId: string }) {
                     <div className="mb-2">
                       <p className="text-xs text-slate-500 mb-1">{t('tradeIdeas.reason')}</p>
                       <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
-                        {(locale === 'fr' && idea.rationale_fr ? idea.rationale_fr : idea.rationale)?.split('.')[0]}...
+                        {(locale === 'fr' ? idea.rationale_fr : idea.rationale)?.split('.')[0]}...
                       </p>
                     </div>
                   )}
 
                   <div className="flex items-center justify-between text-xs">
-                    <div className="flex items-center space-x-2">
-                      {idea.confidence !== null && (
-                        <span className={`px-2 py-0.5 rounded ${
-                          idea.confidence >= 70 
-                            ? 'bg-green-100 text-green-700' 
-                            : idea.confidence >= 50 
-                            ? 'bg-yellow-100 text-yellow-700' 
-                            : 'bg-orange-100 text-orange-700'
-                        }`}>
-                          {idea.confidence}% {t('tradeIdeas.confidence')}
-                        </span>
-                      )}
-                    </div>
                     <span className="text-slate-400">
                       {new Date(idea.created_at || '').toLocaleDateString()}
                     </span>
                   </div>
 
-                  {/* Compact score indicators */}
-                  {(idea.technical_score !== null || idea.sentiment_score !== null || idea.macro_score !== null) && (
-                    <div className="flex items-center space-x-2 mt-2 pt-2 border-t border-slate-100">
-                      {idea.technical_score !== null && (
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between mb-0.5">
-                            <span className="text-xs text-slate-500">Tech</span>
-                            <span className="text-xs font-medium text-slate-700">{Math.round(idea.technical_score)}</span>
-                          </div>
-                          <div className="w-full bg-slate-200 rounded-full h-1">
-                            <div 
-                              className="bg-blue-600 h-1 rounded-full transition-all"
-                              style={{ width: `${idea.technical_score}%` }}
-                            ></div>
-                          </div>
-                        </div>
-                      )}
-                      {idea.sentiment_score !== null && (
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between mb-0.5">
-                            <span className="text-xs text-slate-500">Sent</span>
-                            <span className="text-xs font-medium text-slate-700">{Math.round(idea.sentiment_score)}</span>
-                          </div>
-                          <div className="w-full bg-slate-200 rounded-full h-1">
-                            <div 
-                              className="bg-purple-600 h-1 rounded-full transition-all"
-                              style={{ width: `${idea.sentiment_score}%` }}
-                            ></div>
-                          </div>
-                        </div>
-                      )}
-                      {idea.macro_score !== null && (
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between mb-0.5">
-                            <span className="text-xs text-slate-500">Macro</span>
-                            <span className="text-xs font-medium text-slate-700">{Math.round(idea.macro_score)}</span>
-                          </div>
-                          <div className="w-full bg-slate-200 rounded-full h-1">
-                            <div 
-                              className="bg-amber-600 h-1 rounded-full transition-all"
-                              style={{ width: `${idea.macro_score}%` }}
-                            ></div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                  {/* Confidence and scores not available in current database schema */}
                 </button>
               )
             })

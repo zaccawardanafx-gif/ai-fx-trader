@@ -7,7 +7,7 @@ import { useI18n } from '@/lib/i18n-provider'
 
 interface TradeIdea {
   id: string
-  currency_pair: string
+  currency_pair: string | null
   direction: string
   entry: number
   stop_loss: number
@@ -103,7 +103,7 @@ export default function TradeIdeaDetail({ idea, onClose, onUpdate }: TradeIdeaDe
               )}
               <div>
                 <h2 className={`text-2xl font-bold ${isLong ? 'text-green-700' : 'text-red-700'}`} style={{ fontFamily: 'Quicksand, sans-serif' }}>
-                  {idea.direction} {idea.currency_pair}
+                  {idea.direction} {idea.currency_pair || 'N/A'}
                 </h2>
                 <p className="text-sm text-slate-600">
                   {t('tradeIdeas.detail.generated')} {new Date(idea.created_at || '').toLocaleString()}

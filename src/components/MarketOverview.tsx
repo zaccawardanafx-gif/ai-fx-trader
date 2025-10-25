@@ -55,7 +55,26 @@ export default function MarketOverview() {
       }
       
       if (inds.success && inds.data) {
-        setIndicators(inds.data)
+        // Handle both database result and computed indicators
+        if ('id' in inds.data) {
+          // Database result
+          setIndicators(inds.data)
+        } else {
+          // Computed indicators - convert to our format
+          setIndicators({
+            id: 0,
+            timestamp: new Date().toISOString(),
+            pair: 'USD/CHF',
+            rsi: inds.data.rsi ?? null,
+            macd: inds.data.macd ?? null,
+            macd_signal: inds.data.macd_signal ?? null,
+            macd_histogram: inds.data.macd_histogram ?? null,
+            sma50: inds.data.sma_50 ?? null,
+            sma200: inds.data.sma_200 ?? null,
+            atr: inds.data.atr ?? null,
+            created_at: new Date().toISOString()
+          })
+        }
       }
       
       if (sent.success) {
@@ -126,7 +145,7 @@ export default function MarketOverview() {
             {indicators?.rsi?.toFixed(2) || 'N/A'}
           </p>
           <p className="mt-1 text-xs text-slate-500">
-            {indicators?.rsi && indicators.rsi > 70 ? 'Overbought' : indicators?.rsi && indicators.rsi < 30 ? 'Oversold' : 'Neutral'}
+            {indicators?.rsi !== null && indicators?.rsi !== undefined && indicators.rsi > 70 ? 'Overbought' : indicators?.rsi !== null && indicators?.rsi !== undefined && indicators.rsi < 30 ? 'Oversold' : 'Neutral'}
           </p>
         </div>
 

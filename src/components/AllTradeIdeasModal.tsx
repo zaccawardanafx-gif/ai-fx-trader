@@ -9,11 +9,19 @@ interface TradeIdea {
   id: string
   user_id: string | null
   prompt_version: number | null
+  currency_pair: string | null
+  direction: string
   entry: number
   stop_loss: number
   take_profit: number
+  pip_target: number | null
   expiry: string | null
   rationale: string | null
+  rationale_fr: string | null
+  technical_score: number | null
+  sentiment_score: number | null
+  macro_score: number | null
+  confidence: number | null
   technical_weight: number | null
   sentiment_weight: number | null
   macro_weight: number | null
@@ -131,7 +139,7 @@ export default function AllTradeIdeasModal({ userId, onClose }: AllTradeIdeasMod
           ) : (
             <div className="grid gap-6">
               {tradeIdeas.map((idea) => {
-                const isLong = true // Default to BUY since direction is not in database
+                const isLong = idea.direction === 'BUY'
                 const riskPips = calculatePips(idea.entry, idea.stop_loss)
                 const rewardPips = calculatePips(idea.entry, idea.take_profit)
                 const riskRewardRatio = parseFloat(rewardPips) / parseFloat(riskPips) || 0
@@ -152,7 +160,7 @@ export default function AllTradeIdeasModal({ userId, onClose }: AllTradeIdeasMod
                           )}
                           <div>
                             <h3 className={`text-lg font-bold ${isLong ? 'text-green-700' : 'text-red-700'}`}>
-                              BUY USD/CHF
+                              {idea.direction} {idea.currency_pair || 'USD/CHF'}
                             </h3>
                             <p className="text-sm text-slate-600">
                               {new Date(idea.created_at || '').toLocaleString()}
@@ -163,7 +171,14 @@ export default function AllTradeIdeasModal({ userId, onClose }: AllTradeIdeasMod
                           <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(idea.status)}`}>
                             {idea.status?.toUpperCase() || 'UNKNOWN'}
                           </span>
-                          {/* Confidence not available in current database schema */}
+                          {idea.confidence !== null && (
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              idea.confidence >= 70 ? 'bg-green-100 text-green-800' : 
+                              idea.confidence >= 50 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
+                            }`}>
+                              {Math.round(idea.confidence)}% confidence
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>

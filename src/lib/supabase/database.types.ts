@@ -223,11 +223,19 @@ export interface Database {
           id: string
           user_id: string | null
           prompt_version: number | null
+          currency_pair: string | null
+          direction: string
           entry: number
           stop_loss: number
           take_profit: number
+          pip_target: number | null
           expiry: string | null
           rationale: string | null
+          rationale_fr: string | null
+          technical_score: number | null
+          sentiment_score: number | null
+          macro_score: number | null
+          confidence: number | null
           technical_weight: number | null
           sentiment_weight: number | null
           macro_weight: number | null
@@ -239,11 +247,19 @@ export interface Database {
           id?: string
           user_id?: string | null
           prompt_version?: number | null
+          currency_pair?: string | null
+          direction: string
           entry: number
           stop_loss: number
           take_profit: number
+          pip_target?: number | null
           expiry?: string | null
           rationale?: string | null
+          rationale_fr?: string | null
+          technical_score?: number | null
+          sentiment_score?: number | null
+          macro_score?: number | null
+          confidence?: number | null
           technical_weight?: number | null
           sentiment_weight?: number | null
           macro_weight?: number | null
@@ -255,11 +271,19 @@ export interface Database {
           id?: string
           user_id?: string | null
           prompt_version?: number | null
+          currency_pair?: string | null
+          direction?: string
           entry?: number
           stop_loss?: number
           take_profit?: number
+          pip_target?: number | null
           expiry?: string | null
           rationale?: string | null
+          rationale_fr?: string | null
+          technical_score?: number | null
+          sentiment_score?: number | null
+          macro_score?: number | null
+          confidence?: number | null
           technical_weight?: number | null
           sentiment_weight?: number | null
           macro_weight?: number | null

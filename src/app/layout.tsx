@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import Script from "next/script";
 import { I18nProvider } from "@/lib/i18n-provider";
 import "./globals.css";
 
@@ -22,6 +23,10 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} antialiased`} style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+        <Script
+          src="https://s3.tradingview.com/tv.js"
+          strategy="beforeInteractive"
+        />
         <I18nProvider>
           {children}
         </I18nProvider>

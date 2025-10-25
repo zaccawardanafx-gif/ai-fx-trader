@@ -7,14 +7,27 @@ import { useI18n } from '@/lib/i18n-provider'
 
 interface TradeIdea {
   id: string
+  user_id: string | null
+  prompt_version: number | null
+  currency_pair: string | null
+  direction: string
   entry: number
   stop_loss: number
   take_profit: number
+  pip_target: number | null
   expiry: string | null
   rationale: string | null
+  rationale_fr: string | null
+  technical_score: number | null
+  sentiment_score: number | null
+  macro_score: number | null
+  confidence: number | null
+  technical_weight: number | null
+  sentiment_weight: number | null
+  macro_weight: number | null
   status: string | null
   created_at: string | null
-  prompt_version: number | null
+  updated_at: string | null
 }
 
 export default function TradeIdeasList({ userId }: { userId: string }) {
@@ -64,10 +77,6 @@ export default function TradeIdeasList({ userId }: { userId: string }) {
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'N/A'
     return new Date(dateString).toLocaleString()
-  }
-
-  const getDirection = (entry: number, takeProfit: number) => {
-    return takeProfit > entry ? 'BUY' : 'SELL'
   }
 
   const calculatePips = (entry: number, target: number) => {
@@ -123,27 +132,27 @@ export default function TradeIdeasList({ userId }: { userId: string }) {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {tradeIdeas.map((idea) => {
-            const direction = getDirection(idea.entry, idea.take_profit)
             const isActive = idea.status === 'active'
+            const isLong = idea.direction === 'BUY'
             
             return (
               <div
                 key={idea.id}
                 className={`bg-white rounded-lg shadow-lg p-6 border-l-4 ${
-                  direction === 'BUY' ? 'border-green-500' : 'border-red-500'
+                  isLong ? 'border-green-500' : 'border-red-500'
                 } ${!isActive ? 'opacity-60' : ''}`}
               >
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center space-x-2">
-                    {direction === 'BUY' ? (
+                    {isLong ? (
                       <TrendingUp className="w-6 h-6 text-green-600" />
                     ) : (
                       <TrendingDown className="w-6 h-6 text-red-600" />
                     )}
                     <span className={`text-xl font-bold ${
-                      direction === 'BUY' ? 'text-green-600' : 'text-red-600'
+                      isLong ? 'text-green-600' : 'text-red-600'
                     }`}>
-                      {direction} USD/CHF
+                      {idea.direction} {idea.currency_pair || 'N/A'}
                     </span>
                   </div>
                   <span className={`text-xs px-2 py-1 rounded ${

@@ -12,20 +12,20 @@ const ResponsiveGridLayout = WidthProvider(Responsive)
 // Default layouts for different breakpoints - moved outside component to prevent re-creation
 const defaultLayouts = {
   lg: [
-    { i: 'chart', x: 0, y: 0, w: 7, h: 20, minW: 4, minH: 8 },
-    { i: 'trade-ideas', x: 7, y: 0, w: 5, h: 20, minW: 3, minH: 8 },
+    { i: 'chart', x: 0, y: 0, w: 7, h: 24, minW: 4, minH: 12 },
+    { i: 'trade-ideas', x: 7, y: 0, w: 5, h: 24, minW: 3, minH: 12 },
   ],
   md: [
-    { i: 'chart', x: 0, y: 0, w: 6, h: 12, minW: 4, minH: 8 },
-    { i: 'trade-ideas', x: 6, y: 0, w: 4, h: 12, minW: 3, minH: 8 },
+    { i: 'chart', x: 0, y: 0, w: 6, h: 20, minW: 4, minH: 12 },
+    { i: 'trade-ideas', x: 6, y: 0, w: 4, h: 20, minW: 3, minH: 12 },
   ],
   sm: [
-    { i: 'chart', x: 0, y: 0, w: 6, h: 12, minW: 4, minH: 6 },
-    { i: 'trade-ideas', x: 0, y: 12, w: 6, h: 12, minW: 3, minH: 6 },
+    { i: 'chart', x: 0, y: 0, w: 6, h: 16, minW: 4, minH: 10 },
+    { i: 'trade-ideas', x: 0, y: 16, w: 6, h: 16, minW: 3, minH: 10 },
   ],
   xs: [
-    { i: 'chart', x: 0, y: 0, w: 4, h: 10, minW: 2, minH: 5 },
-    { i: 'trade-ideas', x: 0, y: 10, w: 4, h: 12, minW: 2, minH: 6 },
+    { i: 'chart', x: 0, y: 0, w: 4, h: 12, minW: 2, minH: 8 },
+    { i: 'trade-ideas', x: 0, y: 12, w: 4, h: 14, minW: 2, minH: 8 },
   ],
 }
 
@@ -144,7 +144,7 @@ export default function DashboardGrid({ userId }: DashboardGridProps) {
         </div>
 
         <div className="space-y-4 py-2">
-          <div style={{ height: '450px' }}>
+          <div style={{ height: '500px' }}>
             <TradingViewChart />
           </div>
           <div style={{ minHeight: '600px' }}>
@@ -157,13 +157,13 @@ export default function DashboardGrid({ userId }: DashboardGridProps) {
 
   // Desktop view with grid layout
   return (
-    <div className="h-screen relative w-full">
+    <div className="h-full relative w-full">
       <ResponsiveGridLayout
-        className="layout h-full w-full"
+        className="layout w-full h-full"
         layouts={layouts}
         breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480 }}
         cols={{ lg: 12, md: 10, sm: 6, xs: 4 }}
-        rowHeight={30}
+        rowHeight={36}
         onLayoutChange={handleLayoutChange}
         draggableHandle=".drag-handle"
         isDraggable={true}
@@ -172,22 +172,26 @@ export default function DashboardGrid({ userId }: DashboardGridProps) {
         preventCollision={false}
         margin={[8, 8]}
       >
-        <div key="chart" className="relative">
-          <div className="drag-handle absolute top-1 left-1 right-1 sm:top-2 sm:left-2 sm:right-2 h-6 sm:h-8 cursor-move z-10 opacity-0 hover:opacity-100 transition-opacity">
-            <div className="bg-blue-600 text-white text-xs font-medium px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg shadow-lg inline-block">
+        <div key="chart" className="relative h-full">
+          <div className="drag-handle absolute top-1 left-1 right-1 sm:top-2 sm:left-2 sm:right-2 h-6 sm:h-8 cursor-move z-10 opacity-0 hover:opacity-100 transition-opacity pointer-events-none">
+            <div className="bg-blue-600 text-white text-xs font-medium px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg shadow-lg inline-block pointer-events-auto">
               📊 Drag to move
             </div>
           </div>
-          <TradingViewChart />
+          <div className="h-full widget-content">
+            <TradingViewChart />
+          </div>
         </div>
       
-        <div key="trade-ideas" className="relative">
-          <div className="drag-handle absolute top-1 left-1 right-1 sm:top-2 sm:left-2 sm:right-2 h-6 sm:h-8 cursor-move z-10 opacity-0 hover:opacity-100 transition-opacity">
-            <div className="bg-blue-600 text-white text-xs font-medium px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg shadow-lg inline-block">
+        <div key="trade-ideas" className="relative h-full">
+          <div className="drag-handle absolute top-1 left-1 right-1 sm:top-2 sm:left-2 sm:right-2 h-6 sm:h-8 cursor-move z-10 opacity-0 hover:opacity-100 transition-opacity pointer-events-none">
+            <div className="bg-blue-600 text-white text-xs font-medium px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg shadow-lg inline-block pointer-events-auto">
               💡 Drag to move
             </div>
           </div>
-          <TradeIdeasWidget userId={userId} />
+          <div className="h-full widget-content">
+            <TradeIdeasWidget userId={userId} />
+          </div>
         </div>
       </ResponsiveGridLayout>
     </div>
