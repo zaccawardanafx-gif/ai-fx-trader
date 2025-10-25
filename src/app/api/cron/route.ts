@@ -1,6 +1,7 @@
 import { fetchMarketData } from '@/app/actions/fetchMarketData'
 import { computeIndicators } from '@/app/actions/computeIndicators'
 import { fetchSentimentMacro } from '@/app/actions/fetchSentimentMacro'
+import { processAutoGeneration } from '@/app/actions/autoGeneration'
 import { NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
@@ -27,12 +28,22 @@ export async function GET(request: Request) {
     const sentimentResult = await fetchSentimentMacro()
     console.log('Sentiment fetch:', sentimentResult.success ? 'success' : 'failed')
 
+    // Process auto-generation for all users
+    const autoGenResult = await processAutoGeneration()
+    console.log('Auto-generation:', autoGenResult.success ? 'success' : 'failed', 
+      `processed: ${autoGenResult.processed}, errors: ${autoGenResult.errors}`)
+
     return NextResponse.json({
       success: true,
       results: {
         market: marketResult.success,
         indicators: indicatorsResult.success,
         sentiment: sentimentResult.success,
+        autoGeneration: autoGenResult.success,
+      },
+      autoGeneration: {
+        processed: autoGenResult.processed,
+        errors: autoGenResult.errors,
       },
       timestamp: new Date().toISOString(),
     })

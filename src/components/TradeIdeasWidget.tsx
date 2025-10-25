@@ -3,9 +3,12 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useI18n } from '@/lib/i18n-provider'
 import { getUserTradeIdeas, generateTradeIdea } from '@/app/actions/generateTradeIdeas'
-import { TrendingUp, TrendingDown, ChevronRight, Sparkles } from 'lucide-react'
+import { getAutoGenerationSettings, toggleAutoGenerationPause, updateAutoGenerationSettings } from '@/app/actions/autoGeneration'
+import { TrendingUp, TrendingDown, ChevronRight, Sparkles, Power, PowerOff } from 'lucide-react'
 import TradeIdeaDetail from './TradeIdeaDetail'
 import AllTradeIdeasModal from './AllTradeIdeasModal'
+import AutoGenerationCountdown from './AutoGenerationCountdown'
+import AutoGenerationSettings from './AutoGenerationSettings'
 
 interface TradeIdea {
   id: string
@@ -39,6 +42,8 @@ export default function TradeIdeasWidget({ userId }: { userId: string }) {
   const [error, setError] = useState<string | null>(null)
   const [selectedIdea, setSelectedIdea] = useState<TradeIdea | null>(null)
   const [showAllIdeas, setShowAllIdeas] = useState(false)
+  const [autoGenSettings, setAutoGenSettings] = useState<any>(null)
+  const [showAutoGenSettings, setShowAutoGenSettings] = useState(false)
   const { t, locale } = useI18n()
 
   const loadTradeIdeas = useCallback(async () => {
@@ -60,12 +65,27 @@ export default function TradeIdeasWidget({ userId }: { userId: string }) {
     setLoading(false)
   }, [userId])
 
+  const loadAutoGenSettings = useCallback(async () => {
+    try {
+      const result = await getAutoGenerationSettings(userId)
+      if (result.success) {
+        setAutoGenSettings(result.data)
+      }
+    } catch (error) {
+      console.error('Error loading auto-generation settings:', error)
+    }
+  }, [userId])
+
   useEffect(() => {
     loadTradeIdeas()
+    loadAutoGenSettings()
     // Auto-refresh every 30 seconds
-    const interval = setInterval(loadTradeIdeas, 30000)
+    const interval = setInterval(() => {
+      loadTradeIdeas()
+      loadAutoGenSettings()
+    }, 30000)
     return () => clearInterval(interval)
-  }, [loadTradeIdeas])
+  }, [loadTradeIdeas, loadAutoGenSettings])
 
   const handleGenerate = async () => {
     setGenerating(true)
@@ -87,6 +107,50 @@ export default function TradeIdeasWidget({ userId }: { userId: string }) {
     }
     
     setGenerating(false)
+  }
+
+  const handleTogglePause = async () => {
+    if (!autoGenSettings) return
+    
+    try {
+      const result = await toggleAutoGenerationPause(userId, !autoGenSettings.paused)
+      if (result.success) {
+        await loadAutoGenSettings()
+      }
+    } catch (error) {
+      console.error('Error toggling pause:', error)
+    }
+  }
+
+  const handleOpenSettings = () => {
+    setShowAutoGenSettings(true)
+  }
+
+  const handleSettingsUpdate = async () => {
+    await loadAutoGenSettings()
+  }
+
+  const handleToggleAutoGeneration = async () => {
+    if (!autoGenSettings) return
+    
+    try {
+      const newEnabledState = !autoGenSettings.enabled
+      const result = await updateAutoGenerationSettings(userId, {
+        enabled: newEnabledState,
+        interval: autoGenSettings.interval,
+        time: autoGenSettings.time,
+        timezone: autoGenSettings.timezone,
+        paused: autoGenSettings.paused
+      })
+      
+      if (result.success) {
+        await loadAutoGenSettings()
+      } else {
+        console.error('Error toggling auto-generation:', result.error)
+      }
+    } catch (error) {
+      console.error('Error toggling auto-generation:', error)
+    }
   }
 
   const calculatePips = (entry: number, target: number) => {
@@ -112,16 +176,78 @@ export default function TradeIdeasWidget({ userId }: { userId: string }) {
           <h2 className="text-base sm:text-2xl font-bold text-white" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
             {t('tradeIdeas.title')}
           </h2>
-          <button
-            onClick={handleGenerate}
-            disabled={generating}
-            className="flex items-center space-x-1 sm:space-x-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-2 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 shadow-lg"
-            title={t('tradeIdeas.title')}
-          >
-            <Sparkles className={`w-3 h-3 sm:w-4 sm:h-4 ${generating ? 'animate-spin' : ''}`} />
-            <span className="hidden sm:inline">{generating ? t('common.loading') : 'New'}</span>
-          </button>
+          <div className="flex items-center space-x-2">
+            {/* Auto-Generation Toggle */}
+            {autoGenSettings && (
+              <button
+                onClick={handleToggleAutoGeneration}
+                className={`flex items-center space-x-1 px-2 sm:px-3 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all duration-200 transform hover:scale-105 shadow-lg ${
+                  autoGenSettings.enabled
+                    ? 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white'
+                    : 'bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white'
+                }`}
+                title={autoGenSettings.enabled ? t('autoGeneration.disableAutoGeneration') : t('autoGeneration.enableAutoGeneration')}
+              >
+                {autoGenSettings.enabled ? (
+                  <Power className="w-3 h-3 sm:w-4 sm:h-4" />
+                ) : (
+                  <PowerOff className="w-3 h-3 sm:w-4 sm:h-4" />
+                )}
+                <span className="hidden sm:inline">
+                  {autoGenSettings.enabled ? t('autoGeneration.autoOn') : t('autoGeneration.autoOff')}
+                </span>
+              </button>
+            )}
+            
+            {/* Generate Button */}
+            <button
+              onClick={handleGenerate}
+              disabled={generating}
+              className="flex items-center space-x-1 sm:space-x-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-2 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 shadow-lg"
+              title={t('tradeIdeas.title')}
+            >
+              <Sparkles className={`w-3 h-3 sm:w-4 sm:h-4 ${generating ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">{generating ? t('common.loading') : t('tradeIdeas.generateNewIdea')}</span>
+            </button>
+          </div>
         </div>
+
+        {/* Auto-Generation Countdown */}
+        {autoGenSettings && autoGenSettings.enabled && (
+          <AutoGenerationCountdown
+            nextGeneration={autoGenSettings.nextGeneration}
+            interval={autoGenSettings.interval}
+            enabled={autoGenSettings.enabled}
+            paused={autoGenSettings.paused}
+            onTogglePause={handleTogglePause}
+            onOpenSettings={handleOpenSettings}
+          />
+        )}
+
+        {/* Auto-Generation Setup Prompt */}
+        {autoGenSettings && !autoGenSettings.enabled && (
+          <div className="bg-gradient-to-r from-blue-500/20 to-indigo-500/20 backdrop-blur-sm border border-blue-400/30 rounded-xl p-3 sm:p-4 mb-3 sm:mb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2 sm:space-x-3">
+                <PowerOff className="w-4 h-4 sm:w-5 sm:h-5 text-blue-300 flex-shrink-0" />
+                <div>
+                  <h3 className="text-xs sm:text-sm font-medium text-blue-200">
+                    {t('autoGeneration.autoGenerationAvailable')}
+                  </h3>
+                  <p className="text-xs text-blue-300/80">
+                    {t('autoGeneration.setupAutoGeneration')}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={handleOpenSettings}
+                className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium transition-colors"
+              >
+{t('autoGeneration.setup')}
+              </button>
+            </div>
+          </div>
+        )}
 
         {error && (
           <div className="bg-red-500/20 backdrop-blur-sm border border-red-500/50 text-red-200 px-3 sm:px-4 py-2 sm:py-3 rounded-xl text-xs sm:text-sm mb-3 sm:mb-4">
@@ -259,6 +385,16 @@ export default function TradeIdeasWidget({ userId }: { userId: string }) {
         <AllTradeIdeasModal
           userId={userId}
           onClose={() => setShowAllIdeas(false)}
+        />
+      )}
+
+      {/* Auto-Generation Settings Modal */}
+      {showAutoGenSettings && autoGenSettings && (
+        <AutoGenerationSettings
+          userId={userId}
+          initialSettings={autoGenSettings}
+          onClose={() => setShowAutoGenSettings(false)}
+          onSettingsUpdate={handleSettingsUpdate}
         />
       )}
     </>

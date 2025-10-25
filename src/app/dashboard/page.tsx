@@ -74,10 +74,10 @@ export default function DashboardPage() {
 
   return (
     <AnimatedBackground>
-      <div className="h-screen flex flex-col overflow-hidden">
+      <div className="min-h-screen flex flex-col">
         <Header username={profile?.username} />
         
-        <main className="flex-1 w-full px-2 sm:px-4 lg:px-6 py-2 overflow-hidden" style={{ height: 'calc(100vh - 64px)' }}>
+        <main className="flex-1 w-full px-2 sm:px-4 lg:px-6 py-2 pb-16">
           {user && <DashboardGrid userId={user.id} />}
         </main>
       </div>

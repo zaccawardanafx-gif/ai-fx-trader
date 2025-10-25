@@ -3,7 +3,9 @@
 import { useState } from 'react'
 import { useI18n } from '@/lib/i18n-provider'
 import { updateUserProfile } from '@/app/actions/profile'
-import { Save, AlertCircle } from 'lucide-react'
+import { getAutoGenerationSettings } from '@/app/actions/autoGeneration'
+import { Save, AlertCircle, Settings } from 'lucide-react'
+import AutoGenerationSettings from './AutoGenerationSettings'
 
 interface Profile {
   id: string
@@ -47,6 +49,8 @@ export default function SettingsForm({ userId, profile }: { userId: string; prof
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
+  const [showAutoGenSettings, setShowAutoGenSettings] = useState(false)
+  const [autoGenSettings, setAutoGenSettings] = useState<any>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -68,9 +72,30 @@ export default function SettingsForm({ userId, profile }: { userId: string; prof
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
+  const loadAutoGenSettings = async () => {
+    try {
+      const result = await getAutoGenerationSettings(userId)
+      if (result.success) {
+        setAutoGenSettings(result.data)
+      }
+    } catch (error) {
+      console.error('Error loading auto-generation settings:', error)
+    }
+  }
+
+  const handleOpenAutoGenSettings = async () => {
+    await loadAutoGenSettings()
+    setShowAutoGenSettings(true)
+  }
+
+  const handleAutoGenSettingsUpdate = async () => {
+    await loadAutoGenSettings()
+  }
+
   const totalWeight = formData.technical_weight + formData.sentiment_weight + formData.macro_weight
 
   return (
+    <>
     <form onSubmit={handleSubmit} className="space-y-8">
       {success && (
         <div className="bg-green-500/20 backdrop-blur-sm border border-green-500/50 text-green-200 px-6 py-4 rounded-xl flex items-center space-x-3">
@@ -320,6 +345,37 @@ export default function SettingsForm({ userId, profile }: { userId: string; prof
         </div>
       </div>
 
+      {/* Auto-Generation Settings */}
+      <div className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl p-8 border border-white/20">
+        <h3 className="text-2xl font-bold text-white mb-3" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+          Auto-Generation
+        </h3>
+        <p className="text-blue-200 mb-6">
+          Configure automatic trade idea generation
+        </p>
+        
+        <div className="flex items-center justify-between p-4 bg-blue-500/20 rounded-lg border border-blue-400/30">
+          <div className="flex items-center space-x-3">
+            <Settings className="w-6 h-6 text-blue-300" />
+            <div>
+              <h4 className="text-lg font-medium text-white">
+                Auto-Generation Settings
+              </h4>
+              <p className="text-sm text-blue-200">
+                Set up automatic trade idea generation with custom intervals
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleOpenAutoGenSettings}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+          >
+            Configure
+          </button>
+        </div>
+      </div>
+
       {/* Submit Button */}
       <div className="flex justify-end">
         <button
@@ -356,5 +412,16 @@ export default function SettingsForm({ userId, profile }: { userId: string; prof
         }
       `}</style>
     </form>
+
+    {/* Auto-Generation Settings Modal */}
+    {showAutoGenSettings && autoGenSettings && (
+      <AutoGenerationSettings
+        userId={userId}
+        initialSettings={autoGenSettings}
+        onClose={() => setShowAutoGenSettings(false)}
+        onSettingsUpdate={handleAutoGenSettingsUpdate}
+      />
+    )}
+  </>
   )
 }

@@ -12,20 +12,20 @@ const ResponsiveGridLayout = WidthProvider(Responsive)
 // Default layouts for different breakpoints - moved outside component to prevent re-creation
 const defaultLayouts = {
   lg: [
-    { i: 'chart', x: 0, y: 0, w: 7, h: 24, minW: 4, minH: 12 },
-    { i: 'trade-ideas', x: 7, y: 0, w: 5, h: 24, minW: 3, minH: 12 },
+    { i: 'chart', x: 0, y: 0, w: 7, h: 18, minW: 4, minH: 10 },
+    { i: 'trade-ideas', x: 7, y: 0, w: 5, h: 18, minW: 3, minH: 10 },
   ],
   md: [
-    { i: 'chart', x: 0, y: 0, w: 6, h: 20, minW: 4, minH: 12 },
-    { i: 'trade-ideas', x: 6, y: 0, w: 4, h: 20, minW: 3, minH: 12 },
+    { i: 'chart', x: 0, y: 0, w: 6, h: 16, minW: 4, minH: 10 },
+    { i: 'trade-ideas', x: 6, y: 0, w: 4, h: 16, minW: 3, minH: 10 },
   ],
   sm: [
-    { i: 'chart', x: 0, y: 0, w: 6, h: 16, minW: 4, minH: 10 },
-    { i: 'trade-ideas', x: 0, y: 16, w: 6, h: 16, minW: 3, minH: 10 },
+    { i: 'chart', x: 0, y: 0, w: 6, h: 12, minW: 4, minH: 8 },
+    { i: 'trade-ideas', x: 0, y: 12, w: 6, h: 12, minW: 3, minH: 8 },
   ],
   xs: [
-    { i: 'chart', x: 0, y: 0, w: 4, h: 12, minW: 2, minH: 8 },
-    { i: 'trade-ideas', x: 0, y: 12, w: 4, h: 14, minW: 2, minH: 8 },
+    { i: 'chart', x: 0, y: 0, w: 4, h: 10, minW: 2, minH: 6 },
+    { i: 'trade-ideas', x: 0, y: 10, w: 4, h: 12, minW: 2, minH: 6 },
   ],
 }
 
@@ -109,7 +109,7 @@ export default function DashboardGrid({ userId }: DashboardGridProps) {
   // On mobile with chart hidden, show only trade ideas in a simple layout
   if (isMobile && chartHidden) {
     return (
-      <div className="min-h-screen relative pb-4">
+      <div className="relative pb-4">
         {/* Mobile Chart Toggle Button */}
         <div className="fixed top-16 right-2 z-50">
           <button
@@ -131,7 +131,7 @@ export default function DashboardGrid({ userId }: DashboardGridProps) {
   // Mobile view with scrollable layout
   if (isMobile) {
     return (
-      <div className="min-h-screen relative pb-4">
+      <div className="relative pb-4">
         {/* Mobile Chart Toggle Button */}
         <div className="fixed top-16 right-2 z-50">
           <button
@@ -144,10 +144,10 @@ export default function DashboardGrid({ userId }: DashboardGridProps) {
         </div>
 
         <div className="space-y-4 py-2">
-          <div style={{ height: '500px' }}>
+          <div style={{ height: '400px' }}>
             <TradingViewChart />
           </div>
-          <div style={{ minHeight: '600px' }}>
+          <div style={{ minHeight: '500px' }}>
             <TradeIdeasWidget userId={userId} />
           </div>
         </div>
@@ -157,9 +157,9 @@ export default function DashboardGrid({ userId }: DashboardGridProps) {
 
   // Desktop view with grid layout
   return (
-    <div className="h-full relative w-full">
+    <div className="relative w-full">
       <ResponsiveGridLayout
-        className="layout w-full h-full"
+        className="layout w-full"
         layouts={layouts}
         breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480 }}
         cols={{ lg: 12, md: 10, sm: 6, xs: 4 }}
