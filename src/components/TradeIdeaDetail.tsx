@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { X, TrendingUp, TrendingDown, Target, Shield, Activity, Brain, Newspaper, Globe, Play, Ban, Settings, BarChart3 } from 'lucide-react'
+import { X, TrendingUp, TrendingDown, Target, Shield, Activity, Brain, Newspaper, Globe, Play, Ban, Settings, BarChart3, DollarSign } from 'lucide-react'
 import { updateTradeIdeaStatus } from '@/app/actions/generateTradeIdeas'
 import { useI18n } from '@/lib/i18n-provider'
 
@@ -25,6 +25,7 @@ interface TradeIdea {
   technical_weight: number | null
   sentiment_weight: number | null
   macro_weight: number | null
+  spot_price_at_generation: number | null
 }
 
 interface TradeIdeaDetailProps {
@@ -160,6 +161,27 @@ export default function TradeIdeaDetail({ idea, onClose, onUpdate }: TradeIdeaDe
               </div>
             )}
           </div>
+
+          {/* Spot Price at Generation */}
+          {idea.spot_price_at_generation && (
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg shadow-md p-4 border-l-4 border-blue-500">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <DollarSign className="w-5 h-5 text-blue-600" />
+                  <div>
+                    <p className="text-sm font-semibold text-slate-700">Spot Price at Generation</p>
+                    <p className="text-xs text-slate-500">Market price when this trade idea was created</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-bold text-blue-600">
+                    {idea.spot_price_at_generation.toFixed(5)}
+                  </p>
+                  <p className="text-xs text-slate-500">{idea.currency_pair || 'USD/CHF'}</p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Risk Parameters Section */}
           <div className="bg-gradient-to-br from-slate-50 to-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">

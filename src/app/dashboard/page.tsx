@@ -75,7 +75,7 @@ export default function DashboardPage() {
   return (
     <AnimatedBackground>
       <div className="min-h-screen flex flex-col">
-        <Header username={profile?.username} />
+        <Header username={profile?.username} userId={user?.id} />
         
         <main className="flex-1 w-full px-2 sm:px-4 lg:px-6 py-2 pb-16">
           {user && <DashboardGrid userId={user.id} />}

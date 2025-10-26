@@ -8,8 +8,9 @@ import { Settings, LogOut, Menu, X, Home, MessageSquare } from 'lucide-react'
 import { useI18n } from '@/lib/i18n-provider'
 import Logo from './Logo'
 import { LanguageSwitcher } from './LanguageSwitcher'
+import NotificationBell from './NotificationBell'
 
-export default function Header({ username }: { username?: string | null }) {
+export default function Header({ username, userId }: { username?: string | null; userId?: string | null }) {
   const router = useRouter()
   const supabase = createClient()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -73,6 +74,11 @@ export default function Header({ username }: { username?: string | null }) {
                 <span className="hidden sm:block text-sm text-slate-600">
                   Welcome, <span className="font-medium text-slate-800">{username}</span>
                 </span>
+              )}
+              
+              {/* Notification Bell */}
+              {userId && (
+                <NotificationBell userId={userId} />
               )}
               
               {/* Language Switcher */}

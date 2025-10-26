@@ -1,14 +1,253 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useI18n } from '@/lib/i18n-provider'
 import { getUserTradeIdeas, generateTradeIdea } from '@/app/actions/generateTradeIdeas'
-import { getAutoGenerationSettings, toggleAutoGenerationPause, updateAutoGenerationSettings, type AutoGenerationStatus } from '@/app/actions/autoGeneration'
+import { getAutoGenerationSettings, toggleAutoGenerationPause, updateAutoGenerationSettings, triggerAutoGeneration, type AutoGenerationStatus } from '@/app/actions/autoGeneration'
 import { TrendingUp, TrendingDown, ChevronRight, Sparkles, Power, PowerOff } from 'lucide-react'
 import TradeIdeaDetail from './TradeIdeaDetail'
 import AllTradeIdeasModal from './AllTradeIdeasModal'
 import AutoGenerationCountdown from './AutoGenerationCountdown'
 import AutoGenerationSettings from './AutoGenerationSettings'
+
+// Confidence Indicator Component
+const ConfidenceIndicator = ({ 
+  confidence, 
+  translations 
+}: { 
+  confidence: number
+  translations: {
+    confidence: string
+    title: string
+    description: string
+    high: string
+    medium: string
+    low: string
+  }
+}) => {
+  const [showTooltip, setShowTooltip] = useState(false)
+  const [tooltipPosition, setTooltipPosition] = useState<'top' | 'bottom' | 'left' | 'right'>('top')
+  const [tooltipAlignment, setTooltipAlignment] = useState<'left' | 'center' | 'right'>('center')
+  const tooltipRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLDivElement>(null)
+
+  const getConfidenceColor = (conf: number) => {
+    if (conf >= 70) return { dot: 'bg-green-500', text: 'text-green-600' }
+    if (conf >= 50) return { dot: 'bg-yellow-500', text: 'text-yellow-600' }
+    return { dot: 'bg-red-500', text: 'text-red-600' }
+  }
+
+  const colors = getConfidenceColor(confidence)
+
+  const calculatePosition = useCallback(() => {
+    if (!triggerRef.current) return
+
+    const trigger = triggerRef.current.getBoundingClientRect()
+    const viewport = {
+      width: window.innerWidth,
+      height: window.innerHeight
+    }
+
+    // Much smaller tooltip dimensions
+    const tooltipWidth = window.innerWidth < 640 ? 224 : 256 // w-56 = 224px mobile, w-64 = 256px desktop
+    const tooltipHeight = 100 // Compact height
+
+    // Default to top
+    let position: 'top' | 'bottom' | 'left' | 'right' = 'top'
+
+    // Check if tooltip would be cut off at the top
+    if (trigger.top - tooltipHeight - 8 < 0) {
+      position = 'bottom'
+    }
+
+    // Check if tooltip would be cut off at the bottom
+    if (position === 'bottom' && trigger.bottom + tooltipHeight + 8 > viewport.height) {
+      position = 'top' // Fall back to top
+    }
+
+    // Simplified margins
+    const margin = window.innerWidth < 640 ? 8 : 16
+    const centerPosition = trigger.left + trigger.width / 2
+    const tooltipLeft = centerPosition - tooltipWidth / 2
+    const tooltipRight = centerPosition + tooltipWidth / 2
+    
+    let alignment: 'left' | 'center' | 'right' = 'center'
+    
+    if (tooltipLeft < margin) {
+      // Would be cut off on left, align to left edge of trigger container
+      alignment = 'left'
+    } else if (tooltipRight > viewport.width - margin) {
+      // Would be cut off on right, align to right edge of trigger container
+      alignment = 'right'
+    }
+
+    setTooltipPosition(position)
+    setTooltipAlignment(alignment)
+  }, [])
+
+  const handleMouseEnter = () => {
+    setShowTooltip(true)
+    setTimeout(calculatePosition, 0)
+  }
+
+  const handleMouseLeave = () => {
+    setShowTooltip(false)
+  }
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setShowTooltip(!showTooltip)
+    if (!showTooltip) {
+      setTimeout(calculatePosition, 50) // Slightly longer delay for mobile
+    }
+  }
+
+  // Close tooltip when clicking outside on mobile
+  const handleMobileBackdropTouch = (e: React.TouchEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setShowTooltip(false)
+  }
+
+  useEffect(() => {
+    if (showTooltip) {
+      calculatePosition()
+      window.addEventListener('resize', calculatePosition)
+      window.addEventListener('scroll', calculatePosition)
+      return () => {
+        window.removeEventListener('resize', calculatePosition)
+        window.removeEventListener('scroll', calculatePosition)
+      }
+    }
+  }, [showTooltip, calculatePosition])
+
+  const getTooltipClasses = () => {
+    const base = "absolute z-50 bg-gray-900 text-white rounded-md shadow-lg transition-all duration-200 pointer-events-none"
+    
+    // Much more compact sizing
+    const isMobile = window.innerWidth < 640
+    const widthClass = isMobile ? "w-56" : "w-64"
+    const paddingClass = "px-3 py-2"
+    const marginClass = "mb-2"
+    
+    let horizontalClass = "left-1/2 transform -translate-x-1/2" // default center
+    
+    switch (tooltipAlignment) {
+      case 'left':
+        horizontalClass = "left-0"
+        break
+      case 'right':
+        horizontalClass = "right-0"
+        break
+      case 'center':
+      default:
+        horizontalClass = "left-1/2 transform -translate-x-1/2"
+        break
+    }
+    
+    switch (tooltipPosition) {
+      case 'top':
+        return `${base} ${widthClass} ${paddingClass} bottom-full ${horizontalClass} ${marginClass}`
+      case 'bottom':
+        return `${base} ${widthClass} ${paddingClass} top-full ${horizontalClass} ${marginClass.replace('mb', 'mt')}`
+      case 'left':
+        return `${base} ${widthClass} ${paddingClass} right-full top-1/2 transform -translate-y-1/2 mr-3`
+      case 'right':
+        return `${base} ${widthClass} ${paddingClass} left-full top-1/2 transform -translate-y-1/2 ml-3`
+      default:
+        return `${base} ${widthClass} ${paddingClass} bottom-full ${horizontalClass} ${marginClass}`
+    }
+  }
+
+  const getArrowClasses = () => {
+    let arrowPosition = "left-1/2 transform -translate-x-1/2" // default center
+    
+    switch (tooltipAlignment) {
+      case 'left':
+        arrowPosition = "left-6" // Position arrow to point to trigger
+        break
+      case 'right':
+        arrowPosition = "right-6" // Position arrow to point to trigger
+        break
+      case 'center':
+      default:
+        arrowPosition = "left-1/2 transform -translate-x-1/2"
+        break
+    }
+    
+    switch (tooltipPosition) {
+      case 'top':
+        return `absolute top-full ${arrowPosition} border-4 border-transparent border-t-gray-900`
+      case 'bottom':
+        return `absolute bottom-full ${arrowPosition} border-4 border-transparent border-b-gray-900`
+      case 'left':
+        return "absolute left-full top-1/2 transform -translate-y-1/2 border-4 border-transparent border-l-gray-900"
+      case 'right':
+        return "absolute right-full top-1/2 transform -translate-y-1/2 border-4 border-transparent border-r-gray-900"
+      default:
+        return `absolute top-full ${arrowPosition} border-4 border-transparent border-t-gray-900`
+    }
+  }
+
+  return (
+    <>
+      <div className="flex items-center mb-2 sm:mb-3 p-2 bg-slate-50/50 rounded-lg border border-slate-200/50">
+        <div className="flex items-center space-x-2 flex-1">
+          <div className={`w-2 h-2 rounded-full ${colors.dot}`}></div>
+          <span className="text-xs text-slate-500">{translations.confidence}</span>
+          <div 
+            ref={triggerRef}
+            className="relative cursor-help select-none ml-2 transition-colors duration-150 hover:opacity-80"
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+            onTouchStart={handleTouchStart}
+          >
+            <span className={`text-xs sm:text-sm font-semibold ${colors.text}`}>
+              {Math.round(confidence)}%
+            </span>
+            
+            {showTooltip && (
+              <div 
+                ref={tooltipRef}
+                className={`${getTooltipClasses()} ${showTooltip ? 'opacity-100' : 'opacity-0'}`}
+              >
+              <div className="font-medium mb-1 text-xs">{translations.title}</div>
+              <div className="text-gray-300 mb-2 text-xs leading-tight">
+                AI confidence based on technical, sentiment & macro analysis
+              </div>
+              <div className="space-y-0.5 text-xs">
+                <div className="flex items-start space-x-1.5">
+                  <span className="text-green-400 font-medium w-8 shrink-0">High:</span>
+                  <span className="text-gray-300 leading-tight">70-100% • Strong signals</span>
+                </div>
+                <div className="flex items-start space-x-1.5">
+                  <span className="text-yellow-400 font-medium w-8 shrink-0">Med:</span>
+                  <span className="text-gray-300 leading-tight">50-69% • Mixed signals</span>
+                </div>
+                <div className="flex items-start space-x-1.5">
+                  <span className="text-red-400 font-medium w-8 shrink-0">Low:</span>
+                  <span className="text-gray-300 leading-tight">0-49% • Weak signals</span>
+                </div>
+              </div>
+                <div className={getArrowClasses()}></div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+      
+      {/* Mobile/tablet backdrop to close tooltip */}
+      {showTooltip && (
+        <div 
+          className="fixed inset-0 z-40 sm:hidden bg-black bg-opacity-10"
+          onTouchStart={handleMobileBackdropTouch}
+          onTouchEnd={handleMobileBackdropTouch}
+        />
+      )}
+    </>
+  )
+}
 
 interface TradeIdea {
   id: string
@@ -31,6 +270,7 @@ interface TradeIdea {
   sentiment_weight: number | null
   macro_weight: number | null
   status: string | null
+  spot_price_at_generation: number | null
   created_at: string | null
   updated_at: string | null
 }
@@ -44,6 +284,9 @@ export default function TradeIdeasWidget({ userId }: { userId: string }) {
   const [showAllIdeas, setShowAllIdeas] = useState(false)
   const [autoGenSettings, setAutoGenSettings] = useState<AutoGenerationStatus | null>(null)
   const [showAutoGenSettings, setShowAutoGenSettings] = useState(false)
+  const [isAutoGenerating, setIsAutoGenerating] = useState(false)
+  const [newTradeIdeaIds, setNewTradeIdeaIds] = useState<Set<string>>(new Set())
+  const previousIdeasRef = useRef<string[]>([])
   const { t, locale } = useI18n()
 
   const loadTradeIdeas = useCallback(async () => {
@@ -53,7 +296,32 @@ export default function TradeIdeasWidget({ userId }: { userId: string }) {
       const result = await getUserTradeIdeas(userId, 5, 'active') // Only show active ideas
       console.log('Trade ideas result:', result)
       if (result.success) {
+        // Check for new ideas
+        const currentIds = result.data.map(idea => idea.id)
+        const previousIds = previousIdeasRef.current
+        
+        // Find newly added ideas
+        const newIds = currentIds.filter(id => !previousIds.includes(id))
+        if (newIds.length > 0) {
+          console.log('New trade ideas detected:', newIds)
+          setNewTradeIdeaIds(prev => {
+            const newSet = new Set(prev)
+            newIds.forEach(id => newSet.add(id))
+            return newSet
+          })
+          
+          // Remove animation after 5 seconds
+          setTimeout(() => {
+            setNewTradeIdeaIds(prev => {
+              const updated = new Set(prev)
+              newIds.forEach(id => updated.delete(id))
+              return updated
+            })
+          }, 5000)
+        }
+        
         setTradeIdeas(result.data)
+        previousIdeasRef.current = currentIds
         setError(null)
       } else {
         setError(result.error || 'Failed to load trade ideas')
@@ -68,7 +336,7 @@ export default function TradeIdeasWidget({ userId }: { userId: string }) {
   const loadAutoGenSettings = useCallback(async () => {
     try {
       const result = await getAutoGenerationSettings(userId)
-      if (result.success) {
+      if (result.success && result.data) {
         setAutoGenSettings(result.data)
       }
     } catch (error) {
@@ -153,6 +421,38 @@ export default function TradeIdeasWidget({ userId }: { userId: string }) {
     }
   }
 
+  const handleAutoGenerate = async () => {
+    // Prevent duplicate calls
+    if (isAutoGenerating) {
+      console.log('Auto-generation already in progress, skipping...')
+      return
+    }
+    
+    // Generate a trade idea when auto-generation timer expires
+    console.log('Auto-generating trade idea for user:', userId)
+    setIsAutoGenerating(true)
+    setGenerating(true)
+    setError(null)
+    
+    try {
+      const result = await triggerAutoGeneration(userId)
+      
+      if (result.success) {
+        // Reload trade ideas and settings
+        await loadTradeIdeas()
+        await loadAutoGenSettings()
+      } else {
+        setError(result.error || 'Failed to generate trade idea')
+      }
+    } catch (error) {
+      console.error('Error in handleAutoGenerate:', error)
+      setError('Failed to generate trade idea')
+    } finally {
+      setGenerating(false)
+      setIsAutoGenerating(false)
+    }
+  }
+
   const calculatePips = (entry: number, target: number) => {
     return Math.abs((target - entry) * 10000).toFixed(1)
   }
@@ -219,8 +519,10 @@ export default function TradeIdeasWidget({ userId }: { userId: string }) {
             interval={autoGenSettings.interval}
             enabled={autoGenSettings.enabled}
             paused={autoGenSettings.paused}
+            userId={userId}
             onTogglePause={handleTogglePause}
             onOpenSettings={handleOpenSettings}
+            onGenerate={handleAutoGenerate}
           />
         )}
 
@@ -273,16 +575,34 @@ export default function TradeIdeasWidget({ userId }: { userId: string }) {
               const isLong = idea.direction === 'BUY'
               const riskPips = calculatePips(idea.entry, idea.stop_loss)
               const rewardPips = calculatePips(idea.entry, idea.take_profit)
+              const isNew = newTradeIdeaIds.has(idea.id)
               
               return (
                 <button
                   key={idea.id}
                   onClick={() => setSelectedIdea(idea)}
-                  className={`w-full text-left bg-gradient-to-br from-slate-50 to-white border-l-4 ${
+                  className={`w-full text-left relative bg-gradient-to-br from-slate-50 to-white border-l-4 ${
                     isLong ? 'border-green-500' : 'border-red-500'
-                  } rounded-lg p-2 sm:p-4 hover:shadow-md transition-shadow group`}
+                  } rounded-lg p-2 sm:p-4 hover:shadow-md transition-all duration-300 group overflow-hidden ${
+                    isNew 
+                      ? `shadow-lg ring-2 ring-opacity-50 animate-pulse ${isLong ? 'ring-green-400' : 'ring-red-400'}` 
+                      : ''
+                  }`}
+                  style={{
+                    animation: isNew ? 'shimmer 2s ease-in-out' : undefined
+                  }}
                 >
-                  <div className="flex items-start justify-between mb-2">
+                  {isNew && (
+                    <div className={`absolute inset-0 bg-gradient-to-r from-transparent to-transparent animate-shimmer-slide pointer-events-none ${
+                      isLong ? 'via-green-300/20' : 'via-red-300/20'
+                    }`} />
+                  )}
+                  {isNew && (
+                    <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r animate-shimmer-slide ${
+                      isLong ? 'from-green-500 via-green-400 to-green-500' : 'from-red-500 via-red-400 to-red-500'
+                    }`} />
+                  )}
+                  <div className="flex items-start justify-between mb-2 relative z-10">
                     <div className="flex items-center space-x-1 sm:space-x-2">
                       {isLong ? (
                         <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 flex-shrink-0" />
@@ -334,6 +654,21 @@ export default function TradeIdeasWidget({ userId }: { userId: string }) {
                       </div>
                     </div>
                   </div>
+
+                  {/* Confidence Level */}
+                  {idea.confidence !== null && (
+                    <ConfidenceIndicator 
+                      confidence={idea.confidence} 
+                      translations={{
+                        confidence: t('tradeIdeas.confidence'),
+                        title: t('tradeIdeas.confidenceTooltip.title'),
+                        description: t('tradeIdeas.confidenceTooltip.description'),
+                        high: t('tradeIdeas.confidenceTooltip.high'),
+                        medium: t('tradeIdeas.confidenceTooltip.medium'),
+                        low: t('tradeIdeas.confidenceTooltip.low')
+                      }}
+                    />
+                  )}
 
                   {/* Rationale Preview */}
                   {(idea.rationale || idea.rationale_fr) && (

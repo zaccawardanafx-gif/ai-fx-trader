@@ -26,6 +26,7 @@ interface TradeIdea {
   sentiment_weight: number | null
   macro_weight: number | null
   status: string | null
+  spot_price_at_generation: number | null
   created_at: string | null
   updated_at: string | null
 }

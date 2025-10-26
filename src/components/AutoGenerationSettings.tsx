@@ -37,7 +37,7 @@ export default function AutoGenerationSettings({
     enabled: initialSettings?.enabled || false,
     interval: initialSettings?.interval || 'weekly',
     time: initialSettings?.time || '09:00',
-    timezone: initialSettings?.timezone || 'UTC',
+    timezone: initialSettings?.timezone || 'Europe/Zurich',
     paused: initialSettings?.paused || false
   })
 
@@ -52,17 +52,7 @@ export default function AutoGenerationSettings({
   ]
 
   const timezoneOptions = [
-    { value: 'UTC', label: 'UTC (Coordinated Universal Time)' },
-    { value: 'America/New_York', label: 'EST/EDT (New York)' },
-    { value: 'America/Chicago', label: 'CST/CDT (Chicago)' },
-    { value: 'America/Denver', label: 'MST/MDT (Denver)' },
-    { value: 'America/Los_Angeles', label: 'PST/PDT (Los Angeles)' },
-    { value: 'Europe/London', label: 'GMT/BST (London)' },
-    { value: 'Europe/Paris', label: 'CET/CEST (Paris)' },
-    { value: 'Europe/Zurich', label: 'CET/CEST (Zurich)' },
-    { value: 'Asia/Tokyo', label: 'JST (Tokyo)' },
-    { value: 'Asia/Shanghai', label: 'CST (Shanghai)' },
-    { value: 'Australia/Sydney', label: 'AEST/AEDT (Sydney)' }
+    { value: 'Europe/Zurich', label: 'CET/CEST (Zurich)' }
   ]
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -201,23 +191,18 @@ export default function AutoGenerationSettings({
                   </div>
                 )}
 
-                {/* Timezone */}
+                {/* Timezone - Fixed to Zurich */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <Globe className="w-4 h-4 inline mr-2" />
                     {t('autoGeneration.timezone')}
                   </label>
-                  <select
-                    value={settings.timezone}
-                    onChange={(e) => setSettings(prev => ({ ...prev, timezone: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    {timezoneOptions.map(option => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
+                  <input
+                    type="text"
+                    value="Zurich (CET/CEST)"
+                    readOnly
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100"
+                  />
                 </div>
 
                 {/* Pause/Resume */}

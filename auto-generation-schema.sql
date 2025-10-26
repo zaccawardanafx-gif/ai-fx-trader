@@ -4,7 +4,7 @@
 ALTER TABLE profiles ADD COLUMN auto_generation_enabled BOOLEAN DEFAULT false;
 ALTER TABLE profiles ADD COLUMN auto_generation_interval TEXT DEFAULT 'weekly'; -- 'hourly', '4hours', '6hours', '8hours', '12hours', 'daily', 'weekly'
 ALTER TABLE profiles ADD COLUMN auto_generation_time TIME DEFAULT '09:00:00'; -- For daily/weekly
-ALTER TABLE profiles ADD COLUMN auto_generation_timezone TEXT DEFAULT 'UTC';
+ALTER TABLE profiles ADD COLUMN auto_generation_timezone TEXT DEFAULT 'Europe/Zurich';
 ALTER TABLE profiles ADD COLUMN auto_generation_paused BOOLEAN DEFAULT false;
 ALTER TABLE profiles ADD COLUMN last_auto_generation TIMESTAMPTZ;
 ALTER TABLE profiles ADD COLUMN next_auto_generation TIMESTAMPTZ;
@@ -17,7 +17,7 @@ CREATE TABLE auto_generation_schedule (
   user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
   interval_type TEXT NOT NULL, -- 'hourly', '4hours', '6hours', '8hours', '12hours', 'daily', 'weekly'
   scheduled_time TIME, -- For daily/weekly
-  timezone TEXT DEFAULT 'UTC',
+  timezone TEXT DEFAULT 'Europe/Zurich',
   is_active BOOLEAN DEFAULT true,
   is_paused BOOLEAN DEFAULT false,
   last_triggered TIMESTAMPTZ,
@@ -82,11 +82,15 @@ CREATE POLICY "Users can update own notifications"
   ON notifications FOR UPDATE
   USING (auth.uid() = user_id);
 
+CREATE POLICY "Users can delete own notifications"
+  ON notifications FOR DELETE
+  USING (auth.uid() = user_id);
+
 -- Function to calculate next generation time
 CREATE OR REPLACE FUNCTION calculate_next_generation_time(
   p_interval_type TEXT,
   p_scheduled_time TIME DEFAULT NULL,
-  p_timezone TEXT DEFAULT 'UTC',
+  p_timezone TEXT DEFAULT 'Europe/Zurich',
   p_current_time TIMESTAMPTZ DEFAULT NOW()
 ) RETURNS TIMESTAMPTZ AS $$
 DECLARE
@@ -143,7 +147,7 @@ CREATE OR REPLACE FUNCTION create_auto_generation_schedule(
   p_user_id UUID,
   p_interval_type TEXT,
   p_scheduled_time TIME DEFAULT NULL,
-  p_timezone TEXT DEFAULT 'UTC'
+  p_timezone TEXT DEFAULT 'Europe/Zurich'
 ) RETURNS UUID AS $$
 DECLARE
   schedule_id UUID;

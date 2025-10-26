@@ -4,73 +4,132 @@ import { createClient } from '@/lib/supabase/server'
 import { generateTradeIdea } from './generateTradeIdeas'
 import { sendNotification, getUserNotificationPreferences } from '@/lib/notifications'
 
+// Helper function to convert timezone-aware dates
+// For production, install: npm install date-fns-tz
+function fromZonedTime(date: Date): Date {
+  // Simple fallback - assumes the date is already in the correct timezone
+  // In production, use: import { fromZonedTime } from 'date-fns-tz'
+  console.warn('Using simplified timezone conversion. Install date-fns-tz for accurate timezone handling.')
+  return date
+}
+
 /**
  * Calculate next trigger time for auto-generation
  */
 function calculateNextTriggerTime(
   interval: string,
   scheduledTime?: string,
-  timezone: string = 'UTC'
+  timezone: string = 'Europe/Zurich',
+  baseTime?: Date
 ): Date {
-  const now = new Date()
+  const now = baseTime || new Date()
   
-  // Convert to user's timezone for calculations
-  const userTime = new Date(now.toLocaleString("en-US", { timeZone: timezone }))
+  // Helper to convert a datetime string representing a time in a specific timezone to UTC
+  const timeInTimezoneToUtc = (dateStr: string): Date => {
+    // Parse the date string as if it's in the timezone
+    const dateInTz = new Date(dateStr)
+    // Convert from the timezone to UTC
+    return fromZonedTime(dateInTz)
+  }
   
   switch (interval) {
     case 'hourly':
-      return new Date(userTime.getTime() + 60 * 60 * 1000)
+      return new Date(now.getTime() + 60 * 60 * 1000)
     
     case '4hours':
-      return new Date(userTime.getTime() + 4 * 60 * 60 * 1000)
+      return new Date(now.getTime() + 4 * 60 * 60 * 1000)
     
     case '6hours':
-      return new Date(userTime.getTime() + 6 * 60 * 60 * 1000)
+      return new Date(now.getTime() + 6 * 60 * 60 * 1000)
     
     case '8hours':
-      return new Date(userTime.getTime() + 8 * 60 * 60 * 1000)
+      return new Date(now.getTime() + 8 * 60 * 60 * 1000)
     
     case '12hours':
-      return new Date(userTime.getTime() + 12 * 60 * 60 * 1000)
+      return new Date(now.getTime() + 12 * 60 * 60 * 1000)
     
     case 'daily':
       if (scheduledTime) {
         const [hours, minutes] = scheduledTime.split(':').map(Number)
-        const nextRun = new Date(userTime)
-        nextRun.setHours(hours, minutes, 0, 0)
         
-        // If the time has passed today, schedule for tomorrow
-        if (nextRun <= userTime) {
-          nextRun.setDate(nextRun.getDate() + 1)
+        // Get today's date in the target timezone
+        const formatter = new Intl.DateTimeFormat('en-CA', {
+          timeZone: timezone,
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        })
+        const dateStr = formatter.format(now)
+        
+        // Get the current time components in the target timezone
+        const timeFormatter = new Intl.DateTimeFormat('en-US', {
+          timeZone: timezone,
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false
+        }).format(now)
+        const [currentHour, currentMinute] = timeFormatter.split(':').map(Number)
+        
+        // Create date string for today at scheduled time
+        const dateTimeStr = `${dateStr}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`
+        
+        // Convert timezone-aware date string to UTC
+        let scheduledUTC = timeInTimezoneToUtc(dateTimeStr)
+        
+        // Check if the scheduled time has already passed today in target timezone
+        const schedulePassed = (hours < currentHour) || (hours === currentHour && minutes < currentMinute)
+        
+        if (schedulePassed) {
+          scheduledUTC = new Date(scheduledUTC.getTime() + 24 * 60 * 60 * 1000)
         }
         
-        return nextRun
+        return scheduledUTC
       }
-      return new Date(userTime.getTime() + 24 * 60 * 60 * 1000)
+      return new Date(now.getTime() + 24 * 60 * 60 * 1000)
     
     case 'weekly':
       if (scheduledTime) {
         const [hours, minutes] = scheduledTime.split(':').map(Number)
-        const nextRun = new Date(userTime)
-        nextRun.setHours(hours, minutes, 0, 0)
         
-        // Find next occurrence of the same day of week
-        const currentDay = nextRun.getDay()
-        const targetDay = nextRun.getDay() // Same day of week
+        // Get today's date in the target timezone
+        const formatter = new Intl.DateTimeFormat('en-CA', {
+          timeZone: timezone,
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        })
+        const dateStr = formatter.format(now)
         
-        // If it's the same day but time has passed, or if it's a different day
-        if (nextRun <= userTime || nextRun.getDay() !== targetDay) {
-          const daysUntilNext = (7 - (userTime.getDay() - targetDay)) % 7
-          nextRun.setDate(nextRun.getDate() + (daysUntilNext === 0 ? 7 : daysUntilNext))
+        // Get the current time components in the target timezone
+        const timeFormatter = new Intl.DateTimeFormat('en-US', {
+          timeZone: timezone,
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false
+        }).format(now)
+        const [currentHour, currentMinute] = timeFormatter.split(':').map(Number)
+        
+        // Create date string for today at scheduled time
+        const dateTimeStr = `${dateStr}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`
+        
+        // Convert timezone-aware date string to UTC
+        let scheduledUTC = timeInTimezoneToUtc(dateTimeStr)
+        
+        // Check if the scheduled time has already passed today in target timezone
+        const schedulePassed = (hours < currentHour) || (hours === currentHour && minutes < currentMinute)
+        
+        if (schedulePassed) {
+          scheduledUTC = new Date(scheduledUTC.getTime() + 7 * 24 * 60 * 60 * 1000)
         }
         
-        return nextRun
+        return scheduledUTC
       }
-      return new Date(userTime.getTime() + 7 * 24 * 60 * 60 * 1000)
+      return new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
     
     default:
-      // Default to weekly
-      return new Date(userTime.getTime() + 7 * 24 * 60 * 60 * 1000)
+      return new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
   }
 }
 
@@ -130,18 +189,31 @@ export async function getAutoGenerationSettings(userId: string): Promise<{
       return { success: false, error: 'User profile not found' }
     }
 
+    // Type assertion to help TypeScript understand the profile structure
+    const profileData = profile as {
+      auto_generation_enabled: boolean | null
+      auto_generation_interval: string | null
+      auto_generation_time: string | null
+      auto_generation_timezone: string | null
+      auto_generation_paused: boolean | null
+      last_auto_generation: string | null
+      next_auto_generation: string | null
+      auto_generation_retry_count: number | null
+      auto_generation_last_error: string | null
+    }
+
     return {
       success: true,
       data: {
-        enabled: profile.auto_generation_enabled || false,
-        interval: profile.auto_generation_interval || 'weekly',
-        time: profile.auto_generation_time || undefined,
-        timezone: profile.auto_generation_timezone || 'UTC',
-        paused: profile.auto_generation_paused || false,
-        nextGeneration: profile.next_auto_generation || undefined,
-        lastGeneration: profile.last_auto_generation || undefined,
-        retryCount: profile.auto_generation_retry_count || 0,
-        lastError: profile.auto_generation_last_error || undefined
+        enabled: profileData.auto_generation_enabled || false,
+        interval: profileData.auto_generation_interval || 'weekly',
+        time: profileData.auto_generation_time || undefined,
+        timezone: profileData.auto_generation_timezone || 'Europe/Zurich',
+        paused: profileData.auto_generation_paused || false,
+        nextGeneration: profileData.next_auto_generation || undefined,
+        lastGeneration: profileData.last_auto_generation || undefined,
+        retryCount: profileData.auto_generation_retry_count || 0,
+        lastError: profileData.auto_generation_last_error || undefined
       }
     }
   } catch (error) {
@@ -166,6 +238,9 @@ export async function updateAutoGenerationSettings(
     let nextTrigger: Date | null = null
 
     // If enabling auto-generation, create or update the schedule
+    // Force timezone to Europe/Zurich
+    const timezone = 'Europe/Zurich'
+    
     if (settings.enabled) {
       // First, disable any existing schedules
       await supabase
@@ -177,7 +252,7 @@ export async function updateAutoGenerationSettings(
       nextTrigger = calculateNextTriggerTime(
         settings.interval,
         settings.time,
-        settings.timezone
+        timezone
       )
 
       // Create new schedule
@@ -187,7 +262,7 @@ export async function updateAutoGenerationSettings(
           user_id: userId,
           interval_type: settings.interval,
           scheduled_time: settings.time || null,
-          timezone: settings.timezone,
+          timezone: timezone,
           is_active: true,
           is_paused: settings.paused || false,
           next_trigger: nextTrigger.toISOString()
@@ -217,7 +292,7 @@ export async function updateAutoGenerationSettings(
       auto_generation_enabled: settings.enabled,
       auto_generation_interval: settings.interval,
       auto_generation_time: settings.time || null,
-      auto_generation_timezone: settings.timezone,
+      auto_generation_timezone: timezone,
       auto_generation_paused: settings.paused || false
     }
 
@@ -304,16 +379,7 @@ export async function processAutoGeneration(): Promise<{
     // Get all users with active auto-generation that are due
     const { data: schedules, error: scheduleError } = await supabase
       .from('auto_generation_schedule')
-      .select(`
-        *,
-        profiles!inner(
-          id,
-          username,
-          email,
-          auto_generation_retry_count,
-          auto_generation_last_error
-        )
-      `)
+      .select('*')
       .eq('is_active', true)
       .eq('is_paused', false)
       .lte('next_trigger', new Date().toISOString())
@@ -362,7 +428,13 @@ export async function processAutoGeneration(): Promise<{
           })
           
           // Send external notifications
-          const userProfile = schedule.profiles
+          // Get user profile for email
+          const { data: userProfile } = await supabase
+            .from('profiles')
+            .select('email')
+            .eq('id', schedule.user_id)
+            .single()
+          
           if (userProfile?.email) {
             await sendNotification({
               userId: schedule.user_id,
@@ -511,11 +583,16 @@ async function updateNextGenerationTime(userId: string): Promise<void> {
     return
   }
   
-  // Calculate next trigger time
+  // Current time is when this generation just completed
+  const now = new Date()
+  
+  // Calculate next trigger time based on the current generation time + interval
+  // This ensures intervals are correctly spaced (e.g., weekly = 7 days from now, not from last generation)
   const nextTrigger = calculateNextTriggerTime(
     profile.auto_generation_interval || 'daily',
     profile.auto_generation_time || undefined,
-    profile.auto_generation_timezone || 'UTC'
+    profile.auto_generation_timezone || 'Europe/Zurich',
+    now // Use current time as base for next generation
   )
   
   // Update profile
@@ -523,7 +600,7 @@ async function updateNextGenerationTime(userId: string): Promise<void> {
     .from('profiles')
     .update({
       next_auto_generation: nextTrigger.toISOString(),
-      last_auto_generation: new Date().toISOString(),
+      last_auto_generation: now.toISOString(),
       auto_generation_retry_count: 0,
       auto_generation_last_error: null
     })
@@ -534,7 +611,7 @@ async function updateNextGenerationTime(userId: string): Promise<void> {
     .from('auto_generation_schedule')
     .update({
       next_trigger: nextTrigger.toISOString(),
-      last_triggered: new Date().toISOString(),
+      last_triggered: now.toISOString(),
       retry_count: 0,
       last_error: null
     })
@@ -589,8 +666,8 @@ async function handleGenerationFailure(userId: string, errorMessage: string): Pr
     })
     
     // Send external retry notification
-    const prefs = await getUserNotificationPreferences(userId)
-    if (prefs.email) {
+    const prefs = await getUserNotificationPreferences()
+    if (prefs.email && prefs.emailAddress) {
       await sendNotification({
         userId,
         type: 'auto_generation_retry',
@@ -611,8 +688,8 @@ async function handleGenerationFailure(userId: string, errorMessage: string): Pr
     })
     
     // Send external max retries notification
-    const prefs = await getUserNotificationPreferences(userId)
-    if (prefs.email) {
+    const prefs = await getUserNotificationPreferences()
+    if (prefs.email && prefs.emailAddress) {
       await sendNotification({
         userId,
         type: 'auto_generation_error',

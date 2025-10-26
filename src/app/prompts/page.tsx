@@ -78,7 +78,7 @@ export default function PromptsPage() {
 
   return (
     <AnimatedBackground>
-      <Header username={profile?.username} />
+      <Header username={profile?.username} userId={user?.id} />
       
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">

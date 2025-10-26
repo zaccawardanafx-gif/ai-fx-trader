@@ -146,6 +146,7 @@ const autoGenResult = await processAutoGeneration()
 ## Configuration Options
 
 ### Intervals
+- **5 Minutes**: Every 5 minutes (for testing purposes)
 - **Hourly**: Every hour
 - **4 Hours**: Every 4 hours
 - **6 Hours**: Every 6 hours
@@ -188,16 +189,76 @@ psql -d your_database -f auto-generation-schema.sql
 ```
 
 ### 2. Environment Variables
-No additional environment variables required for basic functionality.
+
+Add these environment variables to your `.env.local` file:
+
+```bash
+# Email Service Configuration (Resend)
+RESEND_API_KEY=your_resend_api_key
+
+# App Configuration
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+# Existing variables (if not already set)
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+CRON_SECRET=your_cron_secret
+GOOGLE_GEMINI_API_KEY=your_gemini_api_key
+```
 
 ### 3. Cron Job Configuration
 The existing Vercel cron job will automatically handle auto-generation. Ensure your `CRON_SECRET` environment variable is set.
 
-### 4. Email/Push Notifications (Optional)
-To enable actual email/push notifications, update the notification service in `src/lib/notifications.ts` to integrate with your preferred service:
+### 4. Email Configuration (Resend)
 
-- **Email**: SendGrid, AWS SES, Resend, etc.
-- **Push**: Firebase Cloud Messaging, OneSignal, Pusher, etc.
+The system is now configured to use Resend for email notifications. Here's how to set it up:
+
+#### **Step 1: Get Resend API Key**
+1. Go to [resend.com](https://resend.com)
+2. Sign up for a free account
+3. Navigate to API Keys section
+4. Create a new API key
+5. Copy the API key
+
+#### **Step 2: Configure Environment Variables**
+Add to your `.env.local` file:
+```bash
+RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+NEXT_PUBLIC_APP_URL=http://localhost:3000  # or your production URL
+```
+
+#### **Step 3: Verify Domain (Production)**
+For production, you'll need to:
+1. Add your domain in Resend dashboard
+2. Update the `from` field in `src/lib/notifications.ts`:
+   ```typescript
+   from: 'ZacFX Trader <noreply@yourdomain.com>'
+   ```
+
+#### **Step 4: Test Email Notifications**
+- Enable auto-generation in settings
+- Set a short interval (e.g., hourly) for testing
+- Check your email for notifications
+
+### 5. Alternative Email Services
+
+If you prefer other email services, update `src/lib/notifications.ts`:
+
+#### **SendGrid**
+```bash
+npm install @sendgrid/mail
+```
+
+#### **AWS SES**
+```bash
+npm install @aws-sdk/client-ses
+```
+
+#### **Nodemailer (SMTP)**
+```bash
+npm install nodemailer
+```
 
 ## Usage Examples
 

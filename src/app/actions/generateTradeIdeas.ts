@@ -23,27 +23,28 @@ const TradeIdeaSchema = z.object({
 })
 
 /**
- * Check if user can generate more trades this week
+ * Check if user can execute more trades this week
+ * NOTE: This is for future trade execution feature only, not for generating trade ideas
  */
-async function canGenerateMoreTrades(userId: string, weeklyLimit: number): Promise<boolean> {
-  const supabase = await createClient()
-  
-  // Get start of current week
-  const now = new Date()
-  const startOfWeek = new Date(now)
-  startOfWeek.setDate(now.getDate() - now.getDay())
-  startOfWeek.setHours(0, 0, 0, 0)
-  
-  const { data, error } = await supabase
-    .from('trade_ideas')
-    .select('id')
-    .eq('user_id', userId)
-    .gte('created_at', startOfWeek.toISOString())
-  
-  if (error) return true // Allow on error
-  
-  return (data?.length || 0) < weeklyLimit
-}
+// async function canExecuteMoreTrades(userId: string, weeklyLimit: number): Promise<boolean> {
+//   const supabase = await createClient()
+//   
+//   // Get start of current week
+//   const now = new Date()
+//   const startOfWeek = new Date(now)
+//   startOfWeek.setDate(now.getDate() - now.getDay())
+//   startOfWeek.setHours(0, 0, 0, 0)
+//   
+//   const { data, error } = await supabase
+//     .from('trade_executions') // Future table for actual executed trades
+//     .select('id')
+//     .eq('user_id', userId)
+//     .gte('created_at', startOfWeek.toISOString())
+//   
+//   if (error) return true // Allow on error
+//   
+//   return (data?.length || 0) < weeklyLimit
+// }
 
 /**
  * Generate a trade idea using AI with new trading rules
@@ -78,15 +79,6 @@ export async function generateTradeIdea(userId: string) {
     
     console.log('Profile found:', profile.username)
 
-    // Check weekly trade limit (using fallback since this property might not exist in DB)
-    const weeklyLimit = 5 // Default limit since weekly_trade_limit doesn't exist in current schema
-    if (!await canGenerateMoreTrades(userId, weeklyLimit)) {
-      return {
-        success: false,
-        error: `Weekly trade limit reached (${weeklyLimit} trades per week). Focus on quality over quantity.`
-      }
-    }
-
     const currencyPair = 'USD/CHF' // Default currency pair since selected_currency_pair doesn't exist in current schema
 
     // Get user's active prompt
@@ -113,7 +105,6 @@ You analyze market data through three lenses:
 - **Weekly Target**: ${profile.pip_target_min || 80}-${profile.pip_target_max || 120} net pips
 - **Risk Management**: Maximum ${profile.risk_per_trade || 15} pips risk per trade
 - **Position Sizing**: 1M CHF per position
-- **Weekly Frequency**: 5 quality trades maximum
 - **Per-Trade Target**: 40 pips per rotation
 - **Breakeven Rule**: Move stop to breakeven at +20 pips
 
@@ -291,6 +282,7 @@ Provide a natural, professional French translation suitable for financial tradin
       macro_weight: profile.macro_weight,
       expiry: expiryDate.toISOString(),
       currency_pair: currencyPair,
+      spot_price_at_generation: currentPrice, // Add current spot price
     }
 
     let { data: insertedIdea, error: insertError } = await supabase
@@ -358,6 +350,7 @@ Provide a natural, professional French translation suitable for financial tradin
         sentiment_weight: profile.sentiment_weight,
         macro_weight: profile.macro_weight,
         status: 'active',
+        spot_price_at_generation: currentPrice, // Add current spot price
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       }
@@ -371,8 +364,7 @@ Provide a natural, professional French translation suitable for financial tradin
 
     return { 
       success: true, 
-      data: insertedIdea,
-      context // Return context for debugging
+      data: insertedIdea
     }
   } catch (error) {
     console.error('Error generating trade idea:', error)

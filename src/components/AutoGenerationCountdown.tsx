@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useI18n } from '@/lib/i18n-provider'
 import { Clock, Pause, Play, Settings } from 'lucide-react'
 
@@ -9,8 +9,10 @@ interface AutoGenerationCountdownProps {
   interval: string
   enabled: boolean
   paused: boolean
+  userId: string
   onTogglePause: () => void
   onOpenSettings: () => void
+  onGenerate: () => void
 }
 
 export default function AutoGenerationCountdown({
@@ -18,16 +20,56 @@ export default function AutoGenerationCountdown({
   interval,
   enabled,
   paused,
+  userId,
   onTogglePause,
-  onOpenSettings
+  onOpenSettings,
+  onGenerate
 }: AutoGenerationCountdownProps) {
   const { t } = useI18n()
   const [timeLeft, setTimeLeft] = useState('')
+  
+  // Helper function to get Zurich time
+  const getZurichTime = (): string => {
+    const now = new Date()
+    return now.toLocaleTimeString('en-US', { 
+      timeZone: 'Europe/Zurich',
+      hour: '2-digit', 
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    })
+  }
+  
+  const [currentTime, setCurrentTime] = useState<string>(() => getZurichTime())
   const [isGenerating, setIsGenerating] = useState(false)
+  const lastTriggeredGenerationRef = useRef<string | undefined>(nextGeneration)
+  
+  // Update current time every second in Zurich timezone
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(getZurichTime())
+    }, 1000)
+    
+    return () => clearInterval(timer)
+  }, [])
+
+  // Reset generating state when nextGeneration changes (after generation completes)
+  useEffect(() => {
+    if (nextGeneration && lastTriggeredGenerationRef.current !== undefined && 
+        nextGeneration !== lastTriggeredGenerationRef.current &&
+        new Date(nextGeneration).getTime() > new Date(lastTriggeredGenerationRef.current).getTime()) {
+      // Next generation time has been updated to a future time
+      // Generation completed, reset state
+      console.log('Next generation time updated, resetting state')
+      setIsGenerating(false)
+    }
+    lastTriggeredGenerationRef.current = nextGeneration
+  }, [nextGeneration])
 
   useEffect(() => {
-    if (!enabled || !nextGeneration) {
+    if (!enabled || !nextGeneration || paused) {
       setTimeLeft('')
+      setIsGenerating(false)
       return
     }
 
@@ -39,11 +81,18 @@ export default function AutoGenerationCountdown({
       if (diff <= 0) {
         setTimeLeft(t('autoGeneration.generating'))
         setIsGenerating(true)
-        return
+        
+        // Trigger generation once per nextGeneration value
+        if (lastTriggeredGenerationRef.current !== nextGeneration) {
+          console.log('Triggering generation for:', nextGeneration)
+          lastTriggeredGenerationRef.current = nextGeneration
+          onGenerate()
+        }
+      } else {
+        // Countdown is positive - we're waiting
+        setIsGenerating(false)
+        setTimeLeft(formatTimeLeft(diff))
       }
-
-      setIsGenerating(false)
-      setTimeLeft(formatTimeLeft(diff))
     }
 
     // Update immediately
@@ -53,7 +102,7 @@ export default function AutoGenerationCountdown({
     const timer = setInterval(updateCountdown, 1000)
 
     return () => clearInterval(timer)
-  }, [nextGeneration, enabled, t])
+  }, [nextGeneration, enabled, paused, t, onGenerate])
 
   const formatTimeLeft = (milliseconds: number): string => {
     const days = Math.floor(milliseconds / (1000 * 60 * 60 * 24))
@@ -61,8 +110,14 @@ export default function AutoGenerationCountdown({
     const minutes = Math.floor((milliseconds % (1000 * 60 * 60)) / (1000 * 60))
     const seconds = Math.floor((milliseconds % (1000 * 60)) / 1000)
 
-    if (days > 0) {
-      return `${days}d ${hours}h ${minutes}m`
+    // Always show days if there are any, or if it's a weekly interval
+    if (days > 0 || interval === 'weekly') {
+      if (days > 0) {
+        return `${days}d ${hours}h ${minutes}m`
+      } else {
+        // Show hours and minutes even when days = 0 for weekly
+        return `${hours}h ${minutes}m`
+      }
     } else if (hours > 0) {
       return `${hours}h ${minutes}m ${seconds}s`
     } else if (minutes > 0) {
@@ -103,9 +158,11 @@ export default function AutoGenerationCountdown({
             }`}>
               {paused ? '—' : timeLeft}
             </p>
-            <p className="text-xs text-blue-300/80">
-              {getIntervalDisplayName(interval)}
-            </p>
+            <div className="flex items-center gap-2 text-xs text-blue-300/80">
+              <span>{getIntervalDisplayName(interval)}</span>
+              <span className="text-blue-400/60">•</span>
+              <span>{currentTime} (CET/CEST)</span>
+            </div>
           </div>
         </div>
         
