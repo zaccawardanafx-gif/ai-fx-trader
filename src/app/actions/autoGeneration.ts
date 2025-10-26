@@ -328,6 +328,11 @@ export async function processAutoGeneration(): Promise<{
 
     for (const schedule of schedules || []) {
       try {
+        if (!schedule.user_id) {
+          console.error('Schedule has no user_id, skipping')
+          continue
+        }
+        
         console.log(`Processing auto-generation for user ${schedule.user_id}`)
         
         // Attempt to generate trade idea
@@ -337,11 +342,23 @@ export async function processAutoGeneration(): Promise<{
           // Success - update next generation time
           await updateNextGenerationTime(schedule.user_id)
           
-          // Create success notification
+          // Extract trade idea details
+          const tradeIdea = result.data
+          const direction = tradeIdea?.direction || 'N/A'
+          const confidence = tradeIdea?.confidence || 0
+          const currencyPair = tradeIdea?.currency_pair || 'USD/CHF'
+          
+          // Create success notification with trade details
           await createNotification(schedule.user_id, {
             type: 'auto_generation_success',
             title: 'New Trade Idea Generated',
-            message: 'A new trade idea has been automatically generated for you.'
+            message: `${direction} ${currencyPair} with ${Math.round(confidence)}% confidence`,
+            metadata: {
+              direction,
+              confidence,
+              currencyPair,
+              tradeIdeaId: tradeIdea?.id
+            }
           })
           
           // Send external notifications
@@ -351,7 +368,7 @@ export async function processAutoGeneration(): Promise<{
               userId: schedule.user_id,
               type: 'auto_generation_success',
               title: 'New Trade Idea Generated',
-              message: 'A new trade idea has been automatically generated for you.',
+              message: `${direction} ${currencyPair} with ${Math.round(confidence)}% confidence`,
               email: userProfile.email
             })
           }
@@ -360,12 +377,16 @@ export async function processAutoGeneration(): Promise<{
           console.log(`Successfully generated trade idea for user ${schedule.user_id}`)
         } else {
           // Handle failure with retry logic
-          await handleGenerationFailure(schedule.user_id, result.error || 'Unknown error')
+          if (schedule.user_id) {
+            await handleGenerationFailure(schedule.user_id, result.error || 'Unknown error')
+          }
           errors++
         }
       } catch (error) {
         console.error(`Error processing auto-generation for user ${schedule.user_id}:`, error)
-        await handleGenerationFailure(schedule.user_id, error instanceof Error ? error.message : 'Unknown error')
+        if (schedule.user_id) {
+          await handleGenerationFailure(schedule.user_id, error instanceof Error ? error.message : 'Unknown error')
+        }
         errors++
       }
     }
@@ -383,19 +404,142 @@ export async function processAutoGeneration(): Promise<{
 }
 
 /**
+ * Trigger auto-generation for a specific user (called from UI)
+ */
+export async function triggerAutoGeneration(userId: string): Promise<{
+  success: boolean
+  error?: string
+}> {
+  try {
+    console.log(`Triggering auto-generation for user ${userId}`)
+    
+    // Get user's auto-generation settings
+    const settingsResult = await getAutoGenerationSettings(userId)
+    if (!settingsResult.success || !settingsResult.data) {
+      return { success: false, error: 'Failed to get auto-generation settings' }
+    }
+    
+    const settings = settingsResult.data
+    
+    // Check if auto-generation is enabled and not paused
+    if (!settings.enabled) {
+      return { success: false, error: 'Auto-generation is not enabled' }
+    }
+    
+    if (settings.paused) {
+      return { success: false, error: 'Auto-generation is paused' }
+    }
+    
+    // Generate trade idea
+    const result = await generateTradeIdea(userId)
+    
+    if (result.success) {
+      // Update next generation time
+      await updateNextGenerationTime(userId)
+      
+      // Get user profile for notification
+      const supabase = await createClient()
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('email, username')
+        .eq('id', userId)
+        .single()
+      
+      // Extract trade idea details
+      const tradeIdea = result.data
+      const direction = tradeIdea?.direction || 'N/A'
+      const confidence = tradeIdea?.confidence || 0
+      const currencyPair = tradeIdea?.currency_pair || 'USD/CHF'
+      
+      // Create success notification with trade details
+      await createNotification(userId, {
+        type: 'auto_generation_success',
+        title: 'New Trade Idea Generated',
+        message: `${direction} ${currencyPair} with ${Math.round(confidence)}% confidence`,
+        metadata: {
+          direction,
+          confidence,
+          currencyPair,
+          tradeIdeaId: tradeIdea?.id
+        }
+      })
+      
+      // Send email notification if user has email
+      if (profile?.email) {
+        await sendNotification({
+          userId,
+          type: 'auto_generation_success',
+          title: 'New Trade Idea Generated',
+          message: `${direction} ${currencyPair} with ${Math.round(confidence)}% confidence`,
+          email: profile.email
+        })
+      }
+      
+      console.log(`Successfully triggered auto-generation for user ${userId}`)
+      return { success: true }
+    } else {
+      // Handle failure
+      await handleGenerationFailure(userId, result.error || 'Unknown error')
+      return { success: false, error: result.error }
+    }
+  } catch (error) {
+    console.error('Error in triggerAutoGeneration:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    await handleGenerationFailure(userId, errorMessage)
+    return { 
+      success: false, 
+      error: errorMessage
+    }
+  }
+}
+
+/**
  * Update next generation time after successful generation
  */
 async function updateNextGenerationTime(userId: string): Promise<void> {
   const supabase = await createClient()
   
-  // Call the database function to calculate and update next generation time
-  const { error } = await supabase.rpc('update_next_generation_time', {
-    p_user_id: userId
-  })
+  // Get current settings
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('auto_generation_interval, auto_generation_time, auto_generation_timezone')
+    .eq('id', userId)
+    .single()
   
-  if (error) {
-    console.error('Error updating next generation time:', error)
+  if (!profile) {
+    console.error('Profile not found for user:', userId)
+    return
   }
+  
+  // Calculate next trigger time
+  const nextTrigger = calculateNextTriggerTime(
+    profile.auto_generation_interval || 'daily',
+    profile.auto_generation_time || undefined,
+    profile.auto_generation_timezone || 'UTC'
+  )
+  
+  // Update profile
+  await supabase
+    .from('profiles')
+    .update({
+      next_auto_generation: nextTrigger.toISOString(),
+      last_auto_generation: new Date().toISOString(),
+      auto_generation_retry_count: 0,
+      auto_generation_last_error: null
+    })
+    .eq('id', userId)
+  
+  // Update schedule
+  await supabase
+    .from('auto_generation_schedule')
+    .update({
+      next_trigger: nextTrigger.toISOString(),
+      last_triggered: new Date().toISOString(),
+      retry_count: 0,
+      last_error: null
+    })
+    .eq('user_id', userId)
+    .eq('is_active', true)
 }
 
 /**
@@ -489,6 +633,7 @@ async function createNotification(
     type: string
     title: string
     message: string
+    metadata?: Record<string, unknown>
   }
 ): Promise<void> {
   const supabase = await createClient()
@@ -499,7 +644,8 @@ async function createNotification(
       user_id: userId,
       type: notification.type,
       title: notification.title,
-      message: notification.message
+      message: notification.message,
+      metadata: notification.metadata || null
     })
 }
 
@@ -515,6 +661,7 @@ export async function getUserNotifications(userId: string): Promise<{
     message: string
     isRead: boolean
     createdAt: string
+    metadata?: Record<string, unknown>
   }>
   error?: string
 }> {
@@ -523,7 +670,7 @@ export async function getUserNotifications(userId: string): Promise<{
     
     const { data: notifications, error } = await supabase
       .from('notifications')
-      .select('id, type, title, message, is_read, created_at')
+      .select('id, type, title, message, is_read, created_at, metadata')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(50)
@@ -540,8 +687,9 @@ export async function getUserNotifications(userId: string): Promise<{
         type: n.type,
         title: n.title,
         message: n.message,
-        isRead: n.is_read,
-        createdAt: n.created_at
+        isRead: n.is_read ?? false,
+        createdAt: n.created_at ?? new Date().toISOString(),
+        metadata: n.metadata as Record<string, unknown> | undefined
       })) || []
     }
   } catch (error) {
@@ -577,6 +725,73 @@ export async function markNotificationAsRead(
     return { success: true }
   } catch (error) {
     console.error('Error in markNotificationAsRead:', error)
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    }
+  }
+}
+
+/**
+ * Delete a single notification
+ */
+export async function deleteNotification(
+  notificationId: string,
+  userId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const supabase = await createClient()
+    
+    const { error } = await supabase
+      .from('notifications')
+      .delete()
+      .eq('id', notificationId)
+      .eq('user_id', userId)
+
+    if (error) {
+      console.error('Error deleting notification:', error)
+      return { success: false, error: error.message }
+    }
+
+    return { success: true }
+  } catch (error) {
+    console.error('Error in deleteNotification:', error)
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    }
+  }
+}
+
+/**
+ * Clear all notifications for a user
+ */
+export async function clearAllNotifications(
+  userId: string
+): Promise<{ success: boolean; error?: string; count?: number }> {
+  try {
+    const supabase = await createClient()
+    
+    // First get count of notifications to be deleted
+    const { count } = await supabase
+      .from('notifications')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+    
+    // Delete all notifications for this user
+    const { error } = await supabase
+      .from('notifications')
+      .delete()
+      .eq('user_id', userId)
+
+    if (error) {
+      console.error('Error clearing all notifications:', error)
+      return { success: false, error: error.message }
+    }
+
+    return { success: true, count: count || 0 }
+  } catch (error) {
+    console.error('Error in clearAllNotifications:', error)
     return { 
       success: false, 
       error: error instanceof Error ? error.message : 'Unknown error' 

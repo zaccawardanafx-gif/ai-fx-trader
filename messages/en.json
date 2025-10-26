@@ -48,6 +48,13 @@
     "stopLoss": "Stop Loss",
     "takeProfit": "Take Profit",
     "confidence": "Confidence",
+    "confidenceTooltip": {
+      "title": "AI Confidence Level",
+      "description": "How confident the AI is in this trade idea based on technical, sentiment, and macro analysis",
+      "high": "High (70-100%): Strong signals across multiple indicators",
+      "medium": "Medium (50-69%): Mixed signals, moderate confidence",
+      "low": "Low (0-49%): Weak signals, high uncertainty"
+    },
     "reason": "Reason",
     "status": "Status",
     "createdAt": "Created",

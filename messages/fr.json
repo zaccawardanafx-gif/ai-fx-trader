@@ -48,6 +48,13 @@
     "stopLoss": "Stop Loss",
     "takeProfit": "Take Profit",
     "confidence": "Confiance",
+    "confidenceTooltip": {
+      "title": "Niveau de confiance de l'IA",
+      "description": "Le niveau de confiance de l'IA dans cette idée de trading basé sur l'analyse technique, sentiment et macro",
+      "high": "Élevé (70-100%) : Signaux forts sur plusieurs indicateurs",
+      "medium": "Moyen (50-69%) : Signaux mixtes, confiance modérée",
+      "low": "Faible (0-49%) : Signaux faibles, incertitude élevée"
+    },
     "reason": "Raison",
     "status": "Statut",
     "createdAt": "Créé",
